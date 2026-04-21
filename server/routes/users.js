@@ -10,21 +10,9 @@ router.get('/:username', async (req, res) => {
   try {
     const user = await User.findOne({ username: req.params.username })
       .select('username avatar bio bookmarks readingHistory createdAt')
-      .populate('bookmarks', 'title slug cover status rating views latestChapter')
-      .populate('readingHistory.manhwaId', 'title slug cover')
-      .populate('readingHistory.chapterId', 'chapterNumber');
-    
+      .populate('bookmarks', 'title slug cover status rating views latestChapter');
     if (!user) return res.status(404).json({ message: 'User not found' });
-
-    const Comment = (await import('../models/Comment.js')).default;
-    const commentCount = await Comment.countDocuments({ userId: user._id, isDeleted: false });
-
-    res.json({ 
-      data: {
-        ...user.toObject(),
-        commentCount
-      } 
-    });
+    res.json({ data: user });
   } catch (err) {
     res.status(500).json({ message: 'Failed to fetch user', error: err.message });
   }
