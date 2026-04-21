@@ -13,13 +13,14 @@ const generateTokens = (userId) => {
 };
 
 const setTokenCookies = (res, accessToken, refreshToken) => {
+  const isProd = process.env.NODE_ENV === 'production';
   res.cookie('accessToken', accessToken, {
-    httpOnly: true, secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax', maxAge: 15 * 60 * 1000,
+    httpOnly: true, secure: isProd,
+    sameSite: isProd ? 'none' : 'lax', maxAge: 15 * 60 * 1000,
   });
   res.cookie('refreshToken', refreshToken, {
-    httpOnly: true, secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax', maxAge: 7 * 24 * 60 * 60 * 1000, path: '/api/auth',
+    httpOnly: true, secure: isProd,
+    sameSite: isProd ? 'none' : 'lax', maxAge: 7 * 24 * 60 * 60 * 1000, path: '/api/auth',
   });
 };
 
@@ -82,8 +83,16 @@ router.post('/logout', async (req, res) => {
       await User.findByIdAndUpdate(decoded.id, { refreshToken: null });
     }
   } catch { /* ignore */ }
-  res.clearCookie('accessToken');
-  res.clearCookie('refreshToken', { path: '/api/auth' });
+  const isProd = process.env.NODE_ENV === 'production';
+  res.clearCookie('accessToken', {
+    httpOnly: true, secure: isProd,
+    sameSite: isProd ? 'none' : 'lax'
+  });
+  res.clearCookie('refreshToken', { 
+    path: '/api/auth',
+    httpOnly: true, secure: isProd,
+    sameSite: isProd ? 'none' : 'lax'
+  });
   res.json({ message: 'Logged out' });
 });
 
