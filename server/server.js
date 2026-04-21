@@ -37,7 +37,14 @@ process.on('unhandledRejection', (reason, promise) => {
 /* ═══ Middleware ═══ */
 app.use(helmet({ crossOriginResourcePolicy: false }));
 app.use(cors({
-  origin: process.env.NODE_ENV === 'production' ? 'https://terramanhwa.com' : 'http://localhost:3000',
+  origin: [
+    'https://terramanhwa.com', 
+    'https://terramanhwa.vercel.app', 
+    'http://localhost:3000',
+    'http://localhost:3001',
+    'http://localhost:3002',
+    'http://localhost:3003'
+  ],
   credentials: true,
 }));
 app.use(express.json({ limit: '10mb' }));
