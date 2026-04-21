@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { authenticate, requireAdmin } from '../middleware/auth.js';
 import ScrapeLog from '../models/ScrapeLog.js';
+import { fullMetadataSeed } from '../scraper/index.js';
 
 const router = Router();
 
@@ -24,8 +25,9 @@ router.get('/status', authenticate, requireAdmin, async (req, res) => {
 /* POST /api/scraper/run — trigger full scrape */
 router.post('/run', authenticate, requireAdmin, async (req, res) => {
   try {
-    // In production, this would add a job to the Bull queue
-    res.json({ message: 'Scrape job queued', jobId: Date.now().toString() });
+    // Run asynchronously in the background so we don't timeout the HTTP request
+    fullMetadataSeed().catch(err => console.error('Background Scrape Error:', err));
+    res.json({ message: 'Massive Batch Scrape started in the background!', jobId: Date.now().toString() });
   } catch (err) {
     res.status(500).json({ message: 'Failed to start scraper', error: err.message });
   }

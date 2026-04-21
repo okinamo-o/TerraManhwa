@@ -408,5 +408,5 @@ if (args.includes('--seed') || args.includes('--full-seed') || args.includes('--
   })();
 }
 
-export { seedScrape, updateScrape, targetedBatchScrape };
+export { seedScrape, updateScrape, targetedBatchScrape, fullMetadataSeed };
 

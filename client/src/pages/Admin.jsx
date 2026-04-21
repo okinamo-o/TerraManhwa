@@ -91,6 +91,19 @@ export default function Admin() {
     }
   };
 
+  const handleFullScrape = async () => {
+    if (!window.confirm('WARNING: This will trigger a MASSIVE batch scrape of 4,000+ items. This runs in the background on the server. Proceed?')) return;
+    try {
+      setSubmitting(true);
+      await adminService.scrapeAll();
+      toast.success('Massive Batch Scrape started in the background!');
+    } catch (err) {
+      toast.error('Failed to start batch scrape');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   const deleteManhwa = async (id) => {
     if (!window.confirm('Are you sure you want to delete this manhwa?')) return;
     try {
@@ -244,8 +257,16 @@ export default function Admin() {
 
             {activeTab === 'scraper' && (
               <div className="space-y-6">
+                <div className="bg-terra-card border border-terra-border rounded-xl p-5 border-l-4 border-l-terra-gold">
+                  <h3 className="font-display tracking-wider mb-1 text-terra-gold">FULL DATABASE SEED</h3>
+                  <p className="text-xs text-terra-muted mb-4 uppercase tracking-tighter">Use this only for initial population</p>
+                  <Button variant="outline" className="w-full border-terra-gold/30 text-terra-gold hover:bg-terra-gold/10" onClick={handleFullScrape} loading={submitting}>
+                    Trigger Massive Batch Scrape (4,000+ Titles)
+                  </Button>
+                </div>
+
                 <div className="bg-terra-card border border-terra-border rounded-xl p-5">
-                  <h3 className="font-display tracking-wider mb-3">SCRAPER CONTROL</h3>
+                  <h3 className="font-display tracking-wider mb-3">SINGLE SCRAPE</h3>
                   <p className="text-sm text-terra-muted mb-5">Manually trigger the indexing system for a specific title.</p>
                   <div className="flex gap-3">
                     <input
