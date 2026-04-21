@@ -1,0 +1,18 @@
+{
+  "name": "terramanhwa",
+  "version": "1.0.0",
+  "description": "TerraManhwa — Worlds Beyond Pages",
+  "private": true,
+  "scripts": {
+    "dev": "concurrently \"npm run dev:server\" \"npm run dev:client\"",
+    "dev:client": "cd client && npm run dev",
+    "dev:server": "cd server && npm run dev",
+    "install:all": "npm install && cd client && npm install && cd ../server && npm install",
+    "build": "cd client && npm run build",
+    "scrape:seed": "cd server && node scraper/index.js --seed",
+    "scrape:update": "cd server && node scraper/index.js --update"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}
