@@ -22,13 +22,22 @@ router.get('/status', authenticate, requireAdmin, async (req, res) => {
   }
 });
 
+/* Concurrency guard — prevent multiple batch scrapes from running at once */
+let isScraperRunning = false;
+
 /* POST /api/scraper/run — trigger full scrape */
 router.post('/run', authenticate, requireAdmin, async (req, res) => {
+  if (isScraperRunning) {
+    return res.status(409).json({ message: 'A scrape job is already running. Please wait for it to finish.' });
+  }
   try {
-    // Run asynchronously in the background so we don't timeout the HTTP request
-    fullMetadataSeed().catch(err => console.error('Background Scrape Error:', err));
+    isScraperRunning = true;
+    fullMetadataSeed()
+      .catch(err => console.error('Background Scrape Error:', err))
+      .finally(() => { isScraperRunning = false; });
     res.json({ message: 'Massive Batch Scrape started in the background!', jobId: Date.now().toString() });
   } catch (err) {
+    isScraperRunning = false;
     res.status(500).json({ message: 'Failed to start scraper', error: err.message });
   }
 });
