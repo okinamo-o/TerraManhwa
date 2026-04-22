@@ -359,6 +359,7 @@ export default function ChapterReader() {
                   alt={`Page ${i + 1}`}
                   className={`${fitClasses[imageFit] || 'w-full max-w-4xl'} mx-auto animate-fade-in`}
                   loading="lazy"
+                  referrerPolicy="no-referrer"
                 />
               ))}
             </div>
@@ -371,6 +372,7 @@ export default function ChapterReader() {
                 src={pages[currentPage]?.url}
                 alt={`Page ${currentPage + 1}`}
                 className={`${fitClasses[imageFit] || 'w-full max-w-4xl'} mx-auto animate-fade-in`}
+                referrerPolicy="no-referrer"
               />
               <button onClick={goNextPage} className="absolute right-0 top-0 bottom-0 w-1/3 z-10" aria-label="Next page" />
             </div>
@@ -383,12 +385,14 @@ export default function ChapterReader() {
                 src={pages[currentPage]?.url}
                 alt={`Page ${currentPage + 1}`}
                 className="max-h-[85vh] w-auto"
+                referrerPolicy="no-referrer"
               />
               {pages[currentPage + 1] && (
                 <img
                   src={pages[currentPage + 1]?.url}
                   alt={`Page ${currentPage + 2}`}
                   className="max-h-[85vh] w-auto"
+                  referrerPolicy="no-referrer"
                 />
               )}
               <button onClick={goNextPage} className="absolute right-0 top-0 bottom-0 w-1/4 z-10" aria-label="Next page" />
