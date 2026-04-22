@@ -83,10 +83,8 @@ async function seedScrape() {
           await sleep(config.requestDelay.min);
           if (pages.length === 0) continue;
 
-          let uploadedPages = pages;
-          if (process.env.CLOUDINARY_CLOUD_NAME && process.env.CLOUDINARY_CLOUD_NAME !== 'your_cloud_name') {
-            uploadedPages = await uploadChapterPages(pages, item.slug, ch.chapterNumber);
-          }
+          // Use source URLs directly — Cloudinary free tier can't handle thousands of chapter pages
+          const uploadedPages = pages;
 
           const chapterDoc = await Chapter.create({
             manhwaId: manhwaDoc._id,

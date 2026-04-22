@@ -65,6 +65,9 @@ export async function uploadCover(imageUrl, slug) {
  * Upload a chapter page to Cloudinary
  */
 export async function uploadChapterPage(imageUrl, slug, chapterNumber, pageIndex) {
+  if (!config.cloudinary || !config.cloudinary.chapterFolder) {
+    return imageUrl; // Fallback to source URL if config is missing
+  }
   const folder = `${config.cloudinary.chapterFolder}/${slug}/chapter-${chapterNumber}`;
   const publicId = `page-${String(pageIndex).padStart(3, '0')}`;
   return uploadToCloudinary(imageUrl, folder, publicId);
