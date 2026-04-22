@@ -140,7 +140,15 @@ async function fullMetadataSeed() {
         if (existing && existing.synopsis) {
           // Already have metadata, move on
           processed++;
-          if (processed % 100 === 0) console.log(`  📊 [${processed}/${catalog.length}] Progressing...`);
+          if (processed % 50 === 0) {
+            console.log(`  📊 [${processed}/${catalog.length}] Progressing...`);
+            await ScrapeLog.create({
+              type: 'catalog',
+              status: 'success',
+              itemsProcessed: processed,
+              message: `Progress: ${processed}/${catalog.length} items processed (Metadata Only).`
+            });
+          }
           continue;
         }
 

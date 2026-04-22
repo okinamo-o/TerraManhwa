@@ -16,6 +16,7 @@ export default function Button({
     secondary: 'bg-terra-card text-terra-text border border-terra-border hover:border-terra-red hover:text-terra-red',
     ghost: 'text-terra-muted hover:text-terra-text hover:bg-terra-card',
     gold: 'bg-terra-gold text-black font-bold hover:brightness-110 active:scale-[0.97]',
+    outline: 'border-2 bg-transparent',
   };
 
   const sizes = {

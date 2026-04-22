@@ -92,13 +92,21 @@ export default function Admin() {
   };
 
   const handleFullScrape = async () => {
-    if (!window.confirm('WARNING: This will trigger a MASSIVE batch scrape of 4,000+ items. This runs in the background on the server. Proceed?')) return;
+    console.log('Massive Scrape Triggered');
+    if (!window.confirm('WARNING: This will trigger a MASSIVE batch scrape of 4,000+ items. This runs in the background on the server. Proceed?')) {
+      console.log('Massive Scrape Cancelled by user');
+      return;
+    }
+    
     try {
+      console.log('Sending request to /api/scraper/run...');
       setSubmitting(true);
-      await adminService.scrapeAll();
+      const res = await adminService.scrapeAll();
+      console.log('Response from server:', res);
       toast.success('Massive Batch Scrape started in the background!');
     } catch (err) {
-      toast.error('Failed to start batch scrape');
+      console.error('Batch Scrape Request Failed:', err);
+      toast.error(`Failed to start batch scrape: ${err.response?.data?.message || err.message}`);
     } finally {
       setSubmitting(false);
     }
