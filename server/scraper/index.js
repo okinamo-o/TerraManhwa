@@ -402,9 +402,15 @@ async function targetedBatchScrape() {
  * Scrape Single Manhwa — Full Depth (Metadata + Chapters)
  */
 async function scrapeSingle(slug) {
-  console.log(`\n🔍 SINGLE SCRAPE — ${slug}\n`);
+  console.log(`\n🔍 STARTING SINGLE SCRAPE — Slug: ${slug}\n`);
   try {
-    const sourceUrl = `${config.baseURL}/manga/${slug}/`;
+    // Construct full URL if only slug provided
+    let sourceUrl = slug;
+    if (!slug.startsWith('http')) {
+      sourceUrl = `${config.baseURL}/manga/${slug}/`;
+    }
+    
+    console.log(`  🌐 Target URL: ${sourceUrl}`);
     const detail = await scrapeManhwa(sourceUrl);
     if (!detail) throw new Error('No data found for this slug');
 
