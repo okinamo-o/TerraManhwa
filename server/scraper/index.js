@@ -398,6 +398,83 @@ async function targetedBatchScrape() {
   }
 }
 
+/**
+ * Scrape Single Manhwa — Full Depth (Metadata + Chapters)
+ */
+async function scrapeSingle(slug) {
+  console.log(`\n🔍 SINGLE SCRAPE — ${slug}\n`);
+  try {
+    const sourceUrl = `${config.baseURL}/manga/${slug}/`;
+    const detail = await scrapeManhwa(sourceUrl);
+    if (!detail) throw new Error('No data found for this slug');
+
+    let manhwaDoc = await Manhwa.findOne({ slug });
+    if (!manhwaDoc) {
+      manhwaDoc = new Manhwa({
+        title: detail.title,
+        slug,
+        cover: detail.cover,
+        synopsis: detail.synopsis,
+        author: detail.author,
+        artist: detail.artist,
+        genres: detail.genres,
+        status: detail.status,
+      });
+    } else {
+      manhwaDoc.title = detail.title;
+      manhwaDoc.synopsis = detail.synopsis;
+      manhwaDoc.status = detail.status;
+    }
+
+    await manhwaDoc.save();
+    console.log(`  ✅ Manhwa metadata updated: ${detail.title}`);
+
+    // Process Chapters
+    const existingChapters = await Chapter.find({ manhwaId: manhwaDoc._id }).select('chapterNumber');
+    const existingNums = new Set(existingChapters.map(c => c.chapterNumber));
+    const newChs = detail.chapters.filter(ch => !existingNums.has(ch.chapterNumber));
+
+    console.log(`  📥 Found ${detail.chapters.length} total, ${newChs.length} are new.`);
+
+    for (const ch of newChs) {
+      try {
+        const pages = await scrapeChapter(ch.sourceUrl);
+        if (pages.length === 0) continue;
+
+        let uploadedPages = pages;
+        if (process.env.CLOUDINARY_CLOUD_NAME && process.env.CLOUDINARY_CLOUD_NAME !== 'your_cloud_name') {
+          uploadedPages = await uploadChapterPages(pages, slug, ch.chapterNumber);
+        }
+
+        const chapterDoc = await Chapter.create({
+          manhwaId: manhwaDoc._id,
+          chapterNumber: ch.chapterNumber,
+          title: ch.title,
+          pages: uploadedPages.map((url, i) => ({ url, order: i })),
+          sourceUrl: ch.sourceUrl,
+        });
+
+        manhwaDoc.chapters.push(chapterDoc._id);
+        manhwaDoc.latestChapter = Math.max(manhwaDoc.latestChapter || 0, ch.chapterNumber);
+        await manhwaDoc.save();
+        console.log(`    ⭐ Added Chapter ${ch.chapterNumber}`);
+      } catch (chErr) {
+        console.error(`    ❌ Error on chapter ${ch.chapterNumber}: ${chErr.message}`);
+      }
+    }
+
+    await ScrapeLog.create({
+      type: 'update',
+      status: 'success',
+      message: `Single Scrape complete for ${slug}: ${newChs.length} chapters added.`
+    });
+
+  } catch (err) {
+    console.error(`\n❌ Single scrape failed for ${slug}: ${err.message}\n`);
+    await ScrapeLog.create({ type: 'update', status: 'error', message: `Single Scrape failed (${slug}): ${err.message}` });
+  }
+}
+
 /* CLI Entry Point */
 const args = process.argv.slice(2);
 if (args.includes('--seed') || args.includes('--full-seed') || args.includes('--update') || args.includes('--batch')) {
@@ -418,5 +495,5 @@ if (args.includes('--seed') || args.includes('--full-seed') || args.includes('--
   })();
 }
 
-export { seedScrape, updateScrape, targetedBatchScrape, fullMetadataSeed, scrapeManhwa };
+export { seedScrape, updateScrape, targetedBatchScrape, fullMetadataSeed, scrapeSingle };
 
