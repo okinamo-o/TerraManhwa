@@ -233,10 +233,8 @@ async function updateScrape() {
           const pages = await scrapeChapter(ch.sourceUrl);
           if (pages.length === 0) continue;
 
-          let uploadedPages = pages.map((url, i) => ({ url, order: i }));
-          if (process.env.CLOUDINARY_CLOUD_NAME && process.env.CLOUDINARY_CLOUD_NAME !== 'your_cloud_name') {
-            uploadedPages = await uploadChapterPages(pages, existing.slug, ch.chapterNumber);
-          }
+          // Use source URLs directly
+          const uploadedPages = pages.map((pageUrl, i) => ({ url: pageUrl, order: i }));
 
           const chapterDoc = await Chapter.create({
             manhwaId: existing._id,
@@ -447,10 +445,8 @@ async function scrapeSingle(slug) {
         const pages = await scrapeChapter(ch.sourceUrl);
         if (pages.length === 0) continue;
 
-        let uploadedPages = pages.map((url, i) => ({ url, order: i }));
-        if (process.env.CLOUDINARY_CLOUD_NAME && process.env.CLOUDINARY_CLOUD_NAME !== 'your_cloud_name') {
-          uploadedPages = await uploadChapterPages(pages, slug, ch.chapterNumber);
-        }
+        // Use source URLs directly — Cloudinary free tier can't handle thousands of chapter pages
+        const uploadedPages = pages.map((pageUrl, i) => ({ url: pageUrl, order: i }));
 
         const chapterDoc = await Chapter.create({
           manhwaId: manhwaDoc._id,
