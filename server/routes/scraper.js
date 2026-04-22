@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { authenticate, requireAdmin } from '../middleware/auth.js';
 import ScrapeLog from '../models/ScrapeLog.js';
-import { fullMetadataSeed } from '../scraper/index.js';
+import { fullMetadataSeed, scrapeManhwa } from '../scraper/index.js';
 
 const router = Router();
 
@@ -38,7 +38,11 @@ router.post('/single', authenticate, requireAdmin, async (req, res) => {
   try {
     const { slug } = req.body;
     if (!slug) return res.status(400).json({ message: 'Slug required' });
-    res.json({ message: `Scrape job queued for ${slug}`, jobId: Date.now().toString() });
+
+    // Run in background
+    scrapeManhwa(slug).catch(err => console.error('Single Scrape Error:', err));
+    
+    res.json({ message: `Scrape job for ${slug} started in background.` });
   } catch (err) {
     res.status(500).json({ message: 'Failed to start scrape', error: err.message });
   }
