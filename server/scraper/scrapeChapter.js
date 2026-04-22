@@ -14,9 +14,13 @@ export async function scrapeChapter(chapterUrl) {
     
     const pages = [];
     $('#readerarea img').each((i, el) => {
-      const src = $(el).attr('src') || $(el).attr('data-src');
-      if (src && !src.includes('lazy')) {
-        pages.push(src.trim());
+      let src = $(el).attr('src') || $(el).attr('data-src') || $(el).attr('data-lazy-src');
+      if (src) {
+        src = src.trim();
+        if (src.startsWith('//')) src = `https:${src}`;
+        if (src && !src.includes('lazy')) {
+          pages.push(src);
+        }
       }
     });
 

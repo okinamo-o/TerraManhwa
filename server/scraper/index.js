@@ -463,9 +463,21 @@ async function scrapeSingle(slug) {
         manhwaDoc.chapters.push(chapterDoc._id);
         manhwaDoc.latestChapter = Math.max(manhwaDoc.latestChapter || 0, ch.chapterNumber);
         await manhwaDoc.save();
+        
+        await ScrapeLog.create({
+          type: 'update',
+          status: 'success',
+          message: `⭐ ${detail.title}: Added Chapter ${ch.chapterNumber} (${pages.length} pages)`
+        });
+        
         console.log(`    ⭐ Added Chapter ${ch.chapterNumber}`);
       } catch (chErr) {
         console.error(`    ❌ Error on chapter ${ch.chapterNumber}: ${chErr.message}`);
+        await ScrapeLog.create({
+          type: 'update',
+          status: 'error',
+          message: `❌ ${detail.title} (Ch ${ch.chapterNumber}): ${chErr.message}`
+        });
       }
     }
 

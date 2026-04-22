@@ -76,6 +76,7 @@ export async function uploadChapterPage(imageUrl, slug, chapterNumber, pageIndex
 export async function uploadChapterPages(pages, slug, chapterNumber) {
   const uploaded = [];
   for (let i = 0; i < pages.length; i++) {
+    if (!pages[i]) continue;
     try {
       const url = await uploadChapterPage(pages[i], slug, chapterNumber, i);
       uploaded.push({ url, order: i });
