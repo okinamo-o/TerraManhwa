@@ -136,20 +136,17 @@ async function fullMetadataSeed() {
     await ScrapeLog.create({ type: 'catalog', status: 'success', message: `Found ${catalog.length} items in list-mode. Beginning processing...` });
 
     let processed = 0;
+    let skipped = 0;
+    let newItems = 0;
     for (const item of catalog) {
       try {
         const existing = await Manhwa.findOne({ slug: item.slug });
         if (existing && existing.synopsis) {
           // Already have metadata, move on
+          skipped++;
           processed++;
-          if (processed % 50 === 0) {
-            console.log(`  📊 [${processed}/${catalog.length}] Progressing...`);
-            await ScrapeLog.create({
-              type: 'catalog',
-              status: 'success',
-              itemsProcessed: processed,
-              message: `Progress: ${processed}/${catalog.length} items processed (Metadata Only).`
-            });
+          if (skipped % 200 === 0) {
+            console.log(`  ⏩ Skipped ${skipped} existing items (${processed}/${catalog.length})...`);
           }
           continue;
         }
@@ -163,7 +160,7 @@ async function fullMetadataSeed() {
             $set: {
               title: detail.title,
               slug: item.slug,
-              cover: detail.cover || item.cover, // Direct source URLs as requested
+              cover: detail.cover || item.cover,
               synopsis: detail.synopsis,
               author: detail.author,
               artist: detail.artist,
@@ -178,16 +175,24 @@ async function fullMetadataSeed() {
           { upsert: true, new: true }
         );
 
+        newItems++;
         processed++;
-        if (processed % 50 === 0 || processed === 1) {
-          console.log(`  ✅ [${processed}/${catalog.length}] Cached: ${detail.title}`);
+        if (newItems % 25 === 0 || newItems === 1) {
+          console.log(`  ✅ [${processed}/${catalog.length}] NEW: ${detail.title} (${newItems} new so far)`);
+          await ScrapeLog.create({
+            type: 'catalog',
+            status: 'success',
+            itemsProcessed: processed,
+            message: `Progress: ${processed}/${catalog.length} (${newItems} new, ${skipped} skipped)`
+          });
         }
       } catch (err) {
         console.error(`  ❌ Error processing ${item.title}: ${err.message}`);
+        processed++;
       }
       
       // Throttle slightly but keep it fast for metadata-only
-      if (processed % 10 === 0) await sleep(200);
+      if (newItems % 10 === 0 && newItems > 0) await sleep(200);
     }
 
     const duration = Date.now() - startTime;
