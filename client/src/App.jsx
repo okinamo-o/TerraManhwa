@@ -28,15 +28,21 @@ const PageLoader = () => (
   </div>
 );
 
+import { useAuthStore } from './store/authStore';
+
 export default function App() {
+  const checkAuth = useAuthStore(state => state.checkAuth);
+
   React.useEffect(() => {
+    checkAuth();
+    
     // Only track once per browser session
     if (!sessionStorage.getItem('site_visited')) {
       api.post('/admin/track-visit').then(() => {
         sessionStorage.setItem('site_visited', 'true');
       }).catch(console.error);
     }
-  }, []);
+  }, [checkAuth]);
 
   return (
     <ErrorBoundary>
