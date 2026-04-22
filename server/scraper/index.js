@@ -130,8 +130,10 @@ async function fullMetadataSeed() {
   const startTime = Date.now();
 
   try {
+    await ScrapeLog.create({ type: 'catalog', status: 'success', message: 'Massive Metadata Seed Started...' });
     const catalog = await scrapeListMode();
     console.log(`\n📚 Processing ${catalog.length} manhwa (Metadata Only)...\n`);
+    await ScrapeLog.create({ type: 'catalog', status: 'success', message: `Found ${catalog.length} items in list-mode. Beginning processing...` });
 
     let processed = 0;
     for (const item of catalog) {
