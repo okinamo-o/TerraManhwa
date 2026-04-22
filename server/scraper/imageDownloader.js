@@ -77,11 +77,11 @@ export async function uploadChapterPages(pages, slug, chapterNumber) {
   const uploaded = [];
   for (let i = 0; i < pages.length; i++) {
     try {
-      const url = await uploadChapterPage(pages[i].url, slug, chapterNumber, i);
+      const url = await uploadChapterPage(pages[i], slug, chapterNumber, i);
       uploaded.push({ url, order: i });
     } catch (err) {
       console.error(`  ❌ Failed to upload page ${i}: ${err.message}`);
-      uploaded.push({ url: pages[i].url, order: i }); // fallback to source
+      uploaded.push({ url: pages[i], order: i }); // fallback to source
     }
 
     // Small delay between uploads to avoid rate limits

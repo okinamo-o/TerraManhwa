@@ -233,7 +233,7 @@ async function updateScrape() {
           const pages = await scrapeChapter(ch.sourceUrl);
           if (pages.length === 0) continue;
 
-          let uploadedPages = pages;
+          let uploadedPages = pages.map((url, i) => ({ url, order: i }));
           if (process.env.CLOUDINARY_CLOUD_NAME && process.env.CLOUDINARY_CLOUD_NAME !== 'your_cloud_name') {
             uploadedPages = await uploadChapterPages(pages, existing.slug, ch.chapterNumber);
           }
@@ -242,7 +242,7 @@ async function updateScrape() {
             manhwaId: existing._id,
             chapterNumber: ch.chapterNumber,
             title: ch.title,
-            pages: uploadedPages.map((url, i) => ({ url, order: i })),
+            pages: uploadedPages, // Already mapped in uploadChapterPages
             sourceUrl: ch.sourceUrl,
           });
 
@@ -441,7 +441,7 @@ async function scrapeSingle(slug) {
         const pages = await scrapeChapter(ch.sourceUrl);
         if (pages.length === 0) continue;
 
-        let uploadedPages = pages;
+        let uploadedPages = pages.map((url, i) => ({ url, order: i }));
         if (process.env.CLOUDINARY_CLOUD_NAME && process.env.CLOUDINARY_CLOUD_NAME !== 'your_cloud_name') {
           uploadedPages = await uploadChapterPages(pages, slug, ch.chapterNumber);
         }
@@ -450,7 +450,7 @@ async function scrapeSingle(slug) {
           manhwaId: manhwaDoc._id,
           chapterNumber: ch.chapterNumber,
           title: ch.title,
-          pages: uploadedPages.map((url, i) => ({ url, order: i })),
+          pages: uploadedPages, // Already mapped in uploadChapterPages
           sourceUrl: ch.sourceUrl,
         });
 
