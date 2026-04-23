@@ -76,31 +76,23 @@ async function seedScrape() {
           sourceUrl: item.sourceUrl,
         });
 
-        // Increase limit from 20 to 50 for more "complete" feel as requested
-        const chaptersToScrape = detail.chapters.slice(-50);
-        for (const ch of chaptersToScrape) {
-          const pages = await scrapeChapter(ch.sourceUrl);
-          await sleep(config.requestDelay.min);
-          if (pages.length === 0) continue;
-
-          // Use source URLs directly — Cloudinary free tier can't handle thousands of chapter pages
-          const uploadedPages = pages;
-
-          const chapterDoc = await Chapter.create({
+        // CREATE CHAPTER SHELLS (On-Demand Ready)
+        if (detail.chapters.length > 0) {
+          const shellDocs = detail.chapters.map(ch => ({
             manhwaId: manhwaDoc._id,
             chapterNumber: ch.chapterNumber,
             title: ch.title,
-            pages: uploadedPages.map((url, i) => ({ url, order: i })),
+            pages: [], // Empty shell
             sourceUrl: ch.sourceUrl,
-          });
-
-          manhwaDoc.chapters.push(chapterDoc._id);
+          }));
+          const inserted = await Chapter.insertMany(shellDocs);
+          manhwaDoc.chapters = inserted.map(c => c._id);
+          manhwaDoc.latestChapter = detail.chapters[detail.chapters.length - 1].chapterNumber;
+          await manhwaDoc.save();
         }
 
-        manhwaDoc.latestChapter = detail.chapters.length > 0 ? detail.chapters[detail.chapters.length - 1].chapterNumber : 0;
-        await manhwaDoc.save();
         processed++;
-        console.log(`  ✅ [${processed}/${uniqueCatalog.length}] ${detail.title}`);
+        console.log(`  ✅ [${processed}/${uniqueCatalog.length}] ${detail.title} (${detail.chapters.length} chapters seeded)`);
       } catch (err) {
         console.error(`  ❌ Error processing ${item.title}: ${err.message}`);
       }
@@ -173,6 +165,24 @@ async function fullMetadataSeed() {
           { upsert: true, new: true }
         );
 
+        // CREATE CHAPTER SHELLS (On-Demand Ready)
+        const existingChapters = await Chapter.find({ manhwaId: manhwaDoc._id }).select('chapterNumber');
+        const existingNums = new Set(existingChapters.map(c => c.chapterNumber));
+        const newChs = detail.chapters.filter(ch => !existingNums.has(ch.chapterNumber));
+
+        if (newChs.length > 0) {
+          const shellDocs = newChs.map(ch => ({
+            manhwaId: manhwaDoc._id,
+            chapterNumber: ch.chapterNumber,
+            title: ch.title,
+            pages: [], // Empty shell
+            sourceUrl: ch.sourceUrl,
+          }));
+          const inserted = await Chapter.insertMany(shellDocs);
+          manhwaDoc.chapters.push(...inserted.map(c => c._id));
+          await manhwaDoc.save();
+        }
+
         newItems++;
         processed++;
         if (newItems % 25 === 0 || newItems === 1) {
@@ -231,24 +241,23 @@ async function updateScrape() {
 
       const newChs = detail.chapters.filter(ch => !existingNums.has(ch.chapterNumber));
       if (newChs.length > 0) {
-        console.log(`  📥 ${existing.title}: ${newChs.length} new chapters`);
-        for (const ch of newChs) {
-          const pages = await scrapeChapter(ch.sourceUrl);
-          if (pages.length === 0) continue;
+        console.log(`  📥 ${existing.title}: ${newChs.length} new chapter shells added.`);
+        
+        const shellDocs = newChs.map(ch => ({
+          manhwaId: existing._id,
+          chapterNumber: ch.chapterNumber,
+          title: ch.title,
+          pages: [], // Empty shell for on-demand loading
+          sourceUrl: ch.sourceUrl,
+        }));
 
-          // Use source URLs directly
-          const uploadedPages = pages.map((pageUrl, i) => ({ url: pageUrl, order: i }));
+        const inserted = await Chapter.insertMany(shellDocs);
+        existing.chapters.push(...inserted.map(c => c._id));
+        existing.latestChapter = detail.chapters[detail.chapters.length - 1].chapterNumber;
+        await existing.save();
 
-          const chapterDoc = await Chapter.create({
-            manhwaId: existing._id,
-            chapterNumber: ch.chapterNumber,
-            title: ch.title,
-            pages: uploadedPages, // Already mapped in uploadChapterPages
-            sourceUrl: ch.sourceUrl,
-          });
-
-          existing.chapters.push(chapterDoc._id);
-          newChaptersCounter++;
+        newChaptersCounter += inserted.length;
+      }
 
           // [TRIGGER] Notify bookmarked users
           try {
