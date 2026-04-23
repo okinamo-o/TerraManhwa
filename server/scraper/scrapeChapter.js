@@ -14,11 +14,21 @@ export async function scrapeChapter(chapterUrl) {
     
     const pages = [];
     $('#readerarea img').each((i, el) => {
-      let src = $(el).attr('src') || $(el).attr('data-src') || $(el).attr('data-lazy-src');
+      // Prioritize data-lazy-src and data-src as they usually contain the real image URL
+      let src = $(el).attr('data-lazy-src') || $(el).attr('data-src') || $(el).attr('src');
+      
       if (src) {
         src = src.trim();
         if (src.startsWith('//')) src = `https:${src}`;
-        if (src && !src.includes('lazy')) {
+        
+        // Skip base64 placeholders, small icons, and generic "lazy" strings
+        const isPlaceholder = src.startsWith('data:image') || 
+                            src.includes('blank.png') || 
+                            src.includes('grey.gif') ||
+                            src.includes('loading') ||
+                            src.includes('lazy');
+
+        if (src && !isPlaceholder) {
           pages.push(src);
         }
       }

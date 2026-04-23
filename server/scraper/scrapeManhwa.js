@@ -12,7 +12,7 @@ export async function scrapeManhwa(sourceUrl) {
     const html = await fetchHtml(sourceUrl);
     const $ = cheerio.load(html);
     
-    const title = $('.entry-title').text().trim();
+    const title = $('.entry-title').text().trim() || sourceUrl.split('/').filter(Boolean).pop().replace(/-/g, ' ');
     const synopsis = $('.entry-content p').text().trim() || $('.entry-content').text().trim();
     const cover = $('.thumb img').attr('src');
     
@@ -27,7 +27,14 @@ export async function scrapeManhwa(sourceUrl) {
       genres.push($(el).text().trim());
     });
     
-    const status = getMeta('Status') || 'Ongoing';
+    // Normalize status to match DB enum
+    let normalizedStatus = 'Ongoing';
+    const rawStatus = (getMeta('Status') || '').toLowerCase();
+    if (rawStatus.includes('ongoing') || rawStatus.includes('on going')) normalizedStatus = 'Ongoing';
+    else if (rawStatus.includes('completed') || rawStatus.includes('finish') || rawStatus.includes('end')) normalizedStatus = 'Completed';
+    else if (rawStatus.includes('hiatus')) normalizedStatus = 'Hiatus';
+    else if (rawStatus.includes('dropped')) normalizedStatus = 'Dropped';
+    
     const author = getMeta('Author') || 'Unknown';
     const artist = getMeta('Artist') || 'Unknown';
     const type = getMeta('Type') || 'Manhwa';
@@ -57,7 +64,7 @@ export async function scrapeManhwa(sourceUrl) {
       synopsis,
       cover,
       genres,
-      status,
+      status: normalizedStatus,
       author,
       artist,
       chapters: chapters.reverse(), // Reverse to get oldest first for chronological ingestion

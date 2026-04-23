@@ -17,8 +17,11 @@ router.get('/:slug/:number', async (req, res) => {
     
     if (!chapter) return res.status(404).json({ message: 'Chapter not found' });
     
-    // ON-DEMAND LAZY LOAD
-    if ((!chapter.pages || chapter.pages.length === 0) && chapter.sourceUrl) {
+    // ON-DEMAND LAZY LOAD (Re-scrape if empty OR if first page looks like a placeholder)
+    const isPlaceholder = chapter.pages.length > 0 && 
+                         (chapter.pages[0].url.startsWith('data:image') || chapter.pages[0].url.includes('blank'));
+    
+    if ((!chapter.pages || chapter.pages.length === 0 || isPlaceholder || req.query.refresh === 'true') && chapter.sourceUrl) {
       console.log(`[LAZY LOAD] Fetching images for ${manhwa.title} Chapter ${number}...`);
       const images = await scrapeChapter(chapter.sourceUrl);
       if (images && images.length > 0) {
