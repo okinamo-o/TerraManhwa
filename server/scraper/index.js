@@ -131,8 +131,8 @@ async function fullMetadataSeed() {
     for (const item of catalog) {
       try {
         const existing = await Manhwa.findOne({ slug: item.slug });
-        if (existing && existing.synopsis) {
-          // Already have metadata, move on
+        if (existing && existing.synopsis && existing.chapters.length > 0) {
+          // Already have metadata AND chapters, move on
           skipped++;
           processed++;
           if (skipped % 200 === 0) {
