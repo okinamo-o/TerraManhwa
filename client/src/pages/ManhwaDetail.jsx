@@ -31,6 +31,18 @@ export default function ManhwaDetail() {
   const [related, setRelated] = useState([]);
   const [error, setError] = useState(null);
 
+  const [showLongLoadMsg, setShowLongLoadMsg] = useState(false);
+
+  useEffect(() => {
+    let timer;
+    if (loading) {
+      timer = setTimeout(() => setShowLongLoadMsg(true), 1500);
+    } else {
+      setShowLongLoadMsg(false);
+    }
+    return () => clearTimeout(timer);
+  }, [loading]);
+
   useEffect(() => {
     window.scrollTo(0, 0);
     (async () => {
@@ -69,6 +81,16 @@ export default function ManhwaDetail() {
             <SkeletonLine width="w-2/3" height="h-8" />
             <SkeletonLine width="w-1/3" height="h-4" />
             <SkeletonBlock lines={4} />
+
+            {showLongLoadMsg && (
+              <div className="mt-8 p-6 bg-terra-card border border-terra-border rounded-xl animate-pulse flex flex-col items-center justify-center text-center">
+                <Spinner size="md" className="mb-3" />
+                <h3 className="text-terra-gold font-bold text-lg mb-1">Indexing Chapters...</h3>
+                <p className="text-terra-muted text-sm max-w-md">
+                  We are fetching the chapter list for the very first time. This may take 3-5 seconds, but it will be instant on your next visit!
+                </p>
+              </div>
+            )}
           </div>
         </div>
       </div>
