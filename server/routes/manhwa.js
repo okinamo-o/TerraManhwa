@@ -4,6 +4,7 @@ import Manhwa from '../models/Manhwa.js';
 import Chapter from '../models/Chapter.js';
 import { authenticate, requireAdmin, optionalAuth } from '../middleware/auth.js';
 import { manhwaValidation } from '../middleware/validate.js';
+import { scrapeSingle } from '../scraper/index.js';
 
 const router = Router();
 
@@ -126,9 +127,23 @@ router.get('/:slug', async (req, res) => {
     manhwa.views += 1;
     await manhwa.save();
 
-    const chapters = await Chapter.find({ manhwaId: manhwa._id })
+    let chapters = await Chapter.find({ manhwaId: manhwa._id })
       .sort({ chapterNumber: -1 })
       .select('-pages');
+
+    // AUTO-HEAL: If 0 chapters found, trigger a quick metadata scrape
+    if (chapters.length === 0 && manhwa.sourceUrl) {
+      console.log(`[AUTO-HEAL] No chapters for ${manhwa.title}, triggering scrape...`);
+      try {
+        await scrapeSingle(manhwa.slug);
+        // Re-fetch after scrape
+        chapters = await Chapter.find({ manhwaId: manhwa._id })
+          .sort({ chapterNumber: -1 })
+          .select('-pages');
+      } catch (e) {
+        console.error(`[AUTO-HEAL] Failed: ${e.message}`);
+      }
+    }
 
     res.json({ data: manhwa, chapters });
   } catch (err) {
