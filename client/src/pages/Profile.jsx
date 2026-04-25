@@ -113,7 +113,7 @@ export default function Profile() {
   const stats = [
     { label: 'Chapters Read', value: profile.readingHistory?.length || 0, icon: HiBookOpen },
     { label: 'Bookmarks', value: profile.bookmarks?.length || 0, icon: HiBookmark },
-    { label: 'Comments', value: profile.commentCount || 0, icon: HiChat },
+    { label: 'Comments', value: comments.length, icon: HiChat },
   ];
 
   return (
