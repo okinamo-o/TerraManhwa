@@ -91,10 +91,12 @@ export default function Admin() {
     }
   };
 
+  const [showFullScrapeConfirm, setShowFullScrapeConfirm] = useState(false);
+
   const handleFullScrape = async () => {
-    console.log('Massive Scrape Triggered');
-    if (!window.confirm('WARNING: This will trigger a MASSIVE batch scrape of 4,000+ items. This runs in the background on the server. Proceed?')) {
-      console.log('Massive Scrape Cancelled by user');
+    console.log('Massive Scrape Action Started');
+    if (!showFullScrapeConfirm) {
+      setShowFullScrapeConfirm(true);
       return;
     }
     
@@ -104,6 +106,7 @@ export default function Admin() {
       const res = await adminService.scrapeAll();
       console.log('Response from server:', res);
       toast.success('Massive Batch Scrape started in the background!');
+      setShowFullScrapeConfirm(false);
     } catch (err) {
       console.error('Batch Scrape Request Failed:', err);
       toast.error(`Failed to start batch scrape: ${err.response?.data?.message || err.message}`);
@@ -268,9 +271,22 @@ export default function Admin() {
                 <div className="bg-terra-card border border-terra-border rounded-xl p-5 border-l-4 border-l-terra-gold">
                   <h3 className="font-display tracking-wider mb-1 text-terra-gold">FULL DATABASE SEED</h3>
                   <p className="text-xs text-terra-muted mb-4 uppercase tracking-tighter">Use this only for initial population</p>
-                  <Button variant="outline" className="w-full border-terra-gold/30 text-terra-gold hover:bg-terra-gold/10" onClick={handleFullScrape} loading={submitting}>
-                    Trigger Massive Batch Scrape (4,000+ Titles)
+                  <Button 
+                    variant={showFullScrapeConfirm ? "danger" : "outline"} 
+                    className={`w-full ${showFullScrapeConfirm ? "" : "border-terra-gold/30 text-terra-gold hover:bg-terra-gold/10"}`} 
+                    onClick={handleFullScrape} 
+                    loading={submitting}
+                  >
+                    {showFullScrapeConfirm ? "⚠️ Are you sure? Click again to start" : "Trigger Massive Batch Scrape (4,000+ Titles)"}
                   </Button>
+                  {showFullScrapeConfirm && (
+                    <button 
+                      onClick={() => setShowFullScrapeConfirm(false)} 
+                      className="w-full text-center text-[10px] text-terra-muted mt-2 hover:text-terra-text transition-colors"
+                    >
+                      Cancel
+                    </button>
+                  )}
                 </div>
 
                 <div className="bg-terra-card border border-terra-border rounded-xl p-5">
