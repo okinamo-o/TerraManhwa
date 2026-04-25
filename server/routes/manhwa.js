@@ -79,7 +79,7 @@ router.get('/', async (req, res) => {
     const filter = {};
 
     if (genre) {
-      const genres = genre.split(',').map((g) => g.trim());
+      const genres = genre.split(',').map((g) => new RegExp(`^${g.trim()}$`, 'i'));
       filter.genres = { $in: genres };
     }
     if (status) filter.status = status;

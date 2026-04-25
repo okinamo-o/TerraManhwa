@@ -27,8 +27,11 @@ export async function scrapeManhwa(sourceUrl) {
     };
 
     const genres = [];
-    $('.genre-info a, .mgen a').each((i, el) => {
-      genres.push($(el).text().trim());
+    $('.genre-info a, .mgen a, a[rel="tag"]').each((i, el) => {
+      const g = $(el).text().trim();
+      if (g && !genres.includes(g)) {
+        genres.push(g);
+      }
     });
     
     // Normalize status to match DB enum (fallback to aggressive text search if getMeta fails)

@@ -59,9 +59,16 @@ router.post('/heal-meta', authenticate, requireAdmin, async (req, res) => {
         const Manhwa = (await import('../models/Manhwa.js')).default;
         const { scrapeManhwa } = await import('../scraper/scrapeManhwa.js');
         
-        // Find all manhwas currently labeled 'Ongoing' to double check their status
-        const manhwas = await Manhwa.find({ status: 'Ongoing' }).select('slug sourceUrl');
-        console.log(`Found ${manhwas.length} Ongoing manhwas to verify...`);
+        // Find all manhwas that have empty or missing genres
+        const manhwas = await Manhwa.find({
+          $or: [
+            { genres: { $exists: false } },
+            { genres: { $size: 0 } },
+            { genres: null },
+            { genres: [null] }
+          ]
+        }).select('slug sourceUrl');
+        console.log(`Found ${manhwas.length} manhwas missing genres to verify...`);
         
         let healed = 0;
         for (const m of manhwas) {
