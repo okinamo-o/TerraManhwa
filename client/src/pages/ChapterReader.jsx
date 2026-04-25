@@ -193,8 +193,16 @@ export default function ChapterReader() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-black">
+      <div className="min-h-screen flex flex-col items-center justify-center bg-black text-white px-4 text-center">
         <Spinner size="lg" />
+        <div className="mt-6 animate-pulse">
+          <h3 className="text-xl font-bold mb-2 text-primary-400">Loading Chapter...</h3>
+          <p className="text-gray-400 text-sm max-w-sm mx-auto">
+            Please wait a moment while we fetch high-quality images from our source. 
+            <br/><br/>
+            <span className="text-gray-500 text-xs">Note: This only happens the very first time a chapter is opened. Subsequent loads will be instant!</span>
+          </p>
+        </div>
       </div>
     );
   }
