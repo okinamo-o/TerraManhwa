@@ -10,7 +10,9 @@ router.get('/:username', async (req, res) => {
   try {
     const user = await User.findOne({ username: req.params.username })
       .select('username avatar bio bookmarks readingHistory createdAt')
-      .populate('bookmarks', 'title slug cover status rating views latestChapter');
+      .populate('bookmarks', 'title slug cover status rating views latestChapter')
+      .populate('readingHistory.manhwaId', 'title slug cover')
+      .populate('readingHistory.chapterId', 'chapterNumber title');
     if (!user) return res.status(404).json({ message: 'User not found' });
     res.json({ data: user });
   } catch (err) {

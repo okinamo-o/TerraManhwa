@@ -178,7 +178,10 @@ export default function Profile() {
         {activeTab === 'history' && (
           <div className="space-y-4">
             {profile.readingHistory?.length > 0 ? (
-              [...profile.readingHistory].sort((a,b) => new Date(b.updatedAt) - new Date(a.updatedAt)).map((h) => (
+              [...profile.readingHistory]
+                .filter(h => h.manhwaId && h.chapterId) // Hide ghosts
+                .sort((a,b) => new Date(b.updatedAt) - new Date(a.updatedAt))
+                .map((h) => (
                 <div key={h._id} className="bg-terra-card border border-terra-border rounded-xl p-4 flex gap-4 hover:border-terra-red transition-colors group">
                   <div className="w-16 h-20 rounded shadow-lg overflow-hidden shrink-0">
                     <img src={h.manhwaId?.cover} alt={h.manhwaId?.title} className="w-full h-full object-cover" />
