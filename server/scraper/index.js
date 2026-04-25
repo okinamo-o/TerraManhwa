@@ -252,11 +252,11 @@ async function updateScrape() {
         await existing.save();
 
         newChaptersCounter += inserted.length;
-      }
 
-          // [TRIGGER] Notify bookmarked users
-          try {
-            const subscribers = await User.find({ bookmarks: existing._id });
+        // [TRIGGER] Notify bookmarked users for new chapters
+        try {
+          const subscribers = await User.find({ bookmarks: existing._id });
+          for (const ch of newChs) {
             const notifs = subscribers.map(sub => ({
               user: sub._id,
               type: 'new_chapter',
@@ -265,19 +265,16 @@ async function updateScrape() {
               link: `/read/${existing.slug}/${ch.chapterNumber}`
             }));
             if (notifs.length > 0) {
-                await Notification.insertMany(notifs);
-                console.log(`    🔔 Sent ${notifs.length} notifications for ${existing.title} Ch. ${ch.chapterNumber}`);
+              await Notification.insertMany(notifs);
+              console.log(`    🔔 Sent ${notifs.length} notifications for ${existing.title} Ch. ${ch.chapterNumber}`);
             }
-          } catch (err) {
-            console.error(`    ⚠️ Failed to trigger notifications: ${err.message}`);
           }
-
-          await sleep(config.requestDelay.min);
+        } catch (err) {
+          console.error(`    ⚠️ Failed to trigger notifications: ${err.message}`);
         }
-        existing.latestChapter = Math.max(0, ...detail.chapters.map(c => c.chapterNumber));
-        existing.updatedAt = new Date();
-        await existing.save();
       }
+
+      await sleep(config.requestDelay.min);
     }
 
     const duration = Date.now() - startTime;
