@@ -25,6 +25,10 @@ router.get('/status', authenticate, requireAdmin, async (req, res) => {
 /* Concurrency guard — prevent multiple batch scrapes from running at once */
 let isScraperRunning = false;
 
+// Reset on startup (safeguard for server restarts/deploys)
+isScraperRunning = false; 
+console.log('🚀 Scraper Concurrency Guard Reset.');
+
 /* POST /api/scraper/run — trigger full scrape */
 router.post('/run', authenticate, requireAdmin, async (req, res) => {
   if (isScraperRunning) {
