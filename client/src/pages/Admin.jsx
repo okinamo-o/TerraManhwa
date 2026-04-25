@@ -115,6 +115,18 @@ export default function Admin() {
     }
   };
 
+  const handleHealMeta = async () => {
+    try {
+      setSubmitting(true);
+      const res = await adminService.healMeta();
+      toast.success(res.data?.message || 'Background metadata heal job started!');
+    } catch (err) {
+      toast.error(`Failed to start heal job: ${err.response?.data?.message || err.message}`);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   const deleteManhwa = async (id) => {
     if (!window.confirm('Are you sure you want to delete this manhwa?')) return;
     try {
@@ -287,6 +299,19 @@ export default function Admin() {
                       Cancel
                     </button>
                   )}
+                </div>
+
+                <div className="bg-terra-card border border-terra-border rounded-xl p-5 border-l-4 border-l-terra-red">
+                  <h3 className="font-display tracking-wider mb-1 text-terra-red">HEAL ALL METADATA</h3>
+                  <p className="text-xs text-terra-muted mb-4 uppercase tracking-tighter">Fixes genres and statuses for all ongoing manhwa</p>
+                  <Button 
+                    variant="primary" 
+                    className="w-full" 
+                    onClick={handleHealMeta} 
+                    loading={submitting}
+                  >
+                    Trigger Background Heal Job
+                  </Button>
                 </div>
 
                 <div className="bg-terra-card border border-terra-border rounded-xl p-5">

@@ -47,6 +47,7 @@ export const adminService = {
   getChapters: (params) => api.get('/admin/chapters', { params }),
   deleteChapter: (id) => api.delete(`/admin/chapters/${id}`),
   scrapeAll: () => api.post('/scraper/run'),
+  healMeta: () => api.post('/scraper/heal-meta'),
 };
 
 export const notificationService = {

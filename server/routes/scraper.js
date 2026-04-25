@@ -46,6 +46,52 @@ router.post('/run', authenticate, requireAdmin, async (req, res) => {
   }
 });
 
+/* POST /api/scraper/heal-meta — safe background job to fix genres and status */
+router.post('/heal-meta', authenticate, requireAdmin, async (req, res) => {
+  if (isScraperRunning) {
+    return res.status(409).json({ message: 'A scrape job is already running.' });
+  }
+  try {
+    isScraperRunning = true;
+    (async () => {
+      try {
+        console.log('🚀 Background Meta-Heal Started');
+        const Manhwa = (await import('../models/Manhwa.js')).default;
+        const { scrapeManhwa } = await import('../scraper/scrapeManhwa.js');
+        
+        // Find all manhwas currently labeled 'Ongoing' to double check their status
+        const manhwas = await Manhwa.find({ status: 'Ongoing' }).select('slug sourceUrl');
+        console.log(`Found ${manhwas.length} Ongoing manhwas to verify...`);
+        
+        let healed = 0;
+        for (const m of manhwas) {
+          try {
+            const detail = await scrapeManhwa(m.sourceUrl);
+            await Manhwa.findByIdAndUpdate(m._id, {
+              status: detail.status,
+              genres: detail.genres,
+            });
+            healed++;
+            if (healed % 10 === 0) console.log(`[Heal Progress] ${healed}/${manhwas.length} verified.`);
+          } catch(e) {
+            console.error(`[Heal Error] Failed on ${m.slug}: ${e.message}`);
+          }
+          await new Promise(r => setTimeout(r, 200)); // Be nice to the source server
+        }
+        console.log(`✅ Background Meta-Heal Finished. Verified ${healed} items.`);
+      } catch (err) {
+        console.error('Background Heal Error:', err);
+      } finally {
+        isScraperRunning = false;
+      }
+    })();
+    res.json({ message: 'Background metadata heal job started! Check Render logs for progress.' });
+  } catch (err) {
+    isScraperRunning = false;
+    res.status(500).json({ message: 'Failed to start heal', error: err.message });
+  }
+});
+
 /* POST /api/scraper/single — scrape single manhwa */
 router.post('/single', authenticate, requireAdmin, async (req, res) => {
   try {
