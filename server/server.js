@@ -35,10 +35,26 @@ process.on('unhandledRejection', (reason, promise) => {
 });
 
 /* ═══ Middleware ═══ */
-app.use(helmet({ crossOriginResourcePolicy: false }));
+app.use(helmet({
+  crossOriginResourcePolicy: false,
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'", "'unsafe-inline'", "https://cdnjs.cloudflare.com"],
+      styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+      imgSrc: ["'self'", "data:", "blob:", "https://cdn.kingofshojo.com", "https://i.ibb.co", "https://res.cloudinary.com"],
+      connectSrc: ["'self'", "https://terramanhwa.onrender.com", "https://api.cloudinary.com"],
+      fontSrc: ["'self'", "https://fonts.gstatic.com"],
+      objectSrc: ["'none'"],
+      upgradeInsecureRequests: [],
+    },
+  },
+}));
+
 app.use(cors({
   origin: [
     'https://terramanhwa.com', 
+    'https://terramanhwa.onrender.com',
     'https://terramanhwa.vercel.app', 
     'http://localhost:3000',
     'http://localhost:3001',
