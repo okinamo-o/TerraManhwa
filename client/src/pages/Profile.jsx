@@ -6,6 +6,7 @@ import { useAuthStore } from '../store/authStore';
 import { HiBookmark, HiClock, HiChat, HiBookOpen, HiUserCircle, HiCollection, HiPlus, HiX, HiTrash } from 'react-icons/hi';
 import Button from '../components/ui/Button';
 import Spinner from '../components/ui/Spinner';
+import ManhwaGrid from '../components/manhwa/ManhwaGrid';
 
 const tabs = [
   { id: 'bookmarks', label: 'Bookmarks', icon: HiBookmark },
@@ -39,7 +40,7 @@ export default function Profile() {
         const [userRes, commentsRes, collectionsRes] = await Promise.all([
           userService.getProfile(username),
           commentService.getUserComments(username),
-          collectionService.getAll().then(res => ({ data: res.data.data.filter(c => c.owner.username === username) })) // Filter for this user
+          collectionService.getAll().then(res => ({ data: res.data.data.filter(c => c.owner?.username === username) })) // Filter for this user
         ]);
         
         setProfile(userRes.data.data || userRes.data);
