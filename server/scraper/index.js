@@ -131,14 +131,15 @@ async function fullMetadataSeed() {
     for (const item of catalog) {
       try {
         const existing = await Manhwa.findOne({ slug: item.slug });
-        if (existing && existing.synopsis && existing.chapters.length > 0) {
-          // Already have metadata AND chapters, move on
-          skipped++;
-          processed++;
-          if (skipped % 200 === 0) {
-            console.log(`  ⏩ Skipped ${skipped} existing items (${processed}/${catalog.length})...`);
+        if (existing && existing.synopsis) {
+          // We have metadata, but let's check if we need to sync chapters
+          const chapterCount = await Chapter.countDocuments({ manhwaId: existing._id });
+          if (chapterCount > 0 && !req.query.force) {
+            skipped++;
+            processed++;
+            if (skipped % 200 === 0) console.log(`  ⏩ Skipped ${skipped} items...`);
+            continue;
           }
-          continue;
         }
 
         const detail = await scrapeManhwa(item.sourceUrl);
