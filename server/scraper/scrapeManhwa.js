@@ -16,24 +16,29 @@ export async function scrapeManhwa(sourceUrl) {
     const synopsis = $('.entry-content p').text().trim() || $('.entry-content').text().trim();
     const cover = $('.thumb img').attr('src');
     
-    // Improved Metadata parsing via infotable
+    // Aggressive Metadata parsing that handles various MangaTheme DOM structures
     const getMeta = (label) => {
-      return $('.infotable tr').filter((i, el) => $(el).text().includes(label)).find('td:last-child').text().trim() || 
-             $('.imptdt').filter((i, el) => $(el).text().includes(label)).find('i').text().trim();
+      let val = $('.infotable tr').filter((i, el) => $(el).text().includes(label)).find('td:last-child').text().trim();
+      if (val) return val;
+
+      const impt = $('.imptdt').filter((i, el) => $(el).text().includes(label));
+      val = impt.find('i').text().trim() || impt.find('span').text().trim() || impt.text().replace(label, '').trim();
+      return val;
     };
 
     const genres = [];
-    $('.genre-info a').each((i, el) => {
+    $('.genre-info a, .mgen a').each((i, el) => {
       genres.push($(el).text().trim());
     });
     
-    // Normalize status to match DB enum
+    // Normalize status to match DB enum (fallback to aggressive text search if getMeta fails)
     let normalizedStatus = 'Ongoing';
-    const rawStatus = (getMeta('Status') || '').toLowerCase();
-    if (rawStatus.includes('ongoing') || rawStatus.includes('on going')) normalizedStatus = 'Ongoing';
-    else if (rawStatus.includes('completed') || rawStatus.includes('finish') || rawStatus.includes('end')) normalizedStatus = 'Completed';
+    const rawStatus = (getMeta('Status') || $('.tsinfo').text() || $('.infotable').text() || '').toLowerCase();
+    
+    if (rawStatus.includes('completed') || rawStatus.includes('finish') || rawStatus.includes('end')) normalizedStatus = 'Completed';
     else if (rawStatus.includes('hiatus')) normalizedStatus = 'Hiatus';
     else if (rawStatus.includes('dropped')) normalizedStatus = 'Dropped';
+    else if (rawStatus.includes('ongoing') || rawStatus.includes('on going')) normalizedStatus = 'Ongoing';
     
     const author = getMeta('Author') || 'Unknown';
     const artist = getMeta('Artist') || 'Unknown';
