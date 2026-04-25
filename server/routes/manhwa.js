@@ -11,11 +11,19 @@ const router = Router();
 /* GET /api/manhwa/meta — dynamic genres & statuses */
 router.get('/meta', async (req, res) => {
   try {
-    const [genres, statuses] = await Promise.all([
-      Manhwa.distinct('genres'),
-      Manhwa.distinct('status')
-    ]);
-    res.json({ genres: genres.sort(), statuses: statuses.sort() });
+    // Hardcode a clean list of standard genres since the DB was contaminated with nulls
+    const validGenres = [
+      'Action', 'Adventure', 'Comedy', 'Drama', 'Fantasy', 
+      'Historical', 'Horror', 'Isekai', 'Josei', 'Magic', 
+      'Martial Arts', 'Mature', 'Mecha', 'Mystery', 'Psychological', 
+      'Romance', 'School Life', 'Sci-Fi', 'Seinen', 'Shoujo', 
+      'Shounen', 'Slice of Life', 'Smut', 'Sports', 'Supernatural', 'Tragedy'
+    ];
+
+    // Statuses should always be the valid Enum values
+    const validStatuses = ['Ongoing', 'Completed', 'Hiatus', 'Dropped'];
+
+    res.json({ genres: validGenres, statuses: validStatuses });
   } catch (err) {
     res.status(500).json({ message: 'Failed to fetch metadata', error: err.message });
   }

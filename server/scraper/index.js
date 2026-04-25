@@ -432,6 +432,8 @@ async function scrapeSingle(slug) {
       manhwaDoc.title = detail.title;
       manhwaDoc.synopsis = detail.synopsis;
       manhwaDoc.status = detail.status;
+      manhwaDoc.genres = detail.genres;
+      if (detail.cover) manhwaDoc.cover = detail.cover;
     }
 
     await manhwaDoc.save();
