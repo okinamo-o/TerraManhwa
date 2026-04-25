@@ -131,7 +131,7 @@ async function fullMetadataSeed() {
     for (const item of catalog) {
       try {
         const existing = await Manhwa.findOne({ slug: item.slug });
-        if (existing && existing.synopsis && !req.query.force) {
+        if (existing && existing.synopsis) {
           // Temporarily disabling skip logic to force a full "healing" of all 4,000+ items.
           // We want every manhwa to get its full chapter list shells today.
         }
