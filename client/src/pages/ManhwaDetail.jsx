@@ -65,7 +65,9 @@ export default function ManhwaDetail() {
 
   useEffect(() => {
     window.scrollTo(0, 0);
-    (async () => {
+    let pollInterval;
+    
+    const fetchData = async () => {
       try {
         setLoading(true);
         setError(null);
@@ -77,19 +79,41 @@ export default function ManhwaDetail() {
         const mData = res.data.data || res.data;
         if (!mData || !mData.title) throw new Error('Manhwa not found');
 
+        const chs = res.data.chapters || mData.chapters || [];
         setManhwa(mData);
-        setChapters(res.data.chapters || mData.chapters || []);
+        setChapters(chs);
         
         // Filter out the current manhwa from related
         const relData = (relatedRes.data.data || relatedRes.data).filter(m => m.slug !== slug).slice(0, 4);
         setRelated(relData);
+
+        // If no chapters, start polling (maybe it's being scraped)
+        if (chs.length === 0 && !pollInterval) {
+          console.log('Starting poll for chapters...');
+          pollInterval = setInterval(async () => {
+            try {
+              const pollRes = await manhwaService.getBySlug(slug);
+              const pChs = pollRes.data.chapters || (pollRes.data.data?.chapters) || [];
+              if (pChs.length > 0) {
+                setChapters(pChs);
+                clearInterval(pollInterval);
+              }
+            } catch (e) {}
+          }, 5000);
+        }
       } catch (err) {
         console.error('Failed to load manhwa details:', err);
         setError('Could not load manhwa details. It might still be seeding or the server is unavailable.');
       } finally {
         setLoading(false);
       }
-    })();
+    };
+
+    fetchData();
+
+    return () => {
+      if (pollInterval) clearInterval(pollInterval);
+    };
   }, [slug]);
 
   if (loading) {

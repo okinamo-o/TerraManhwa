@@ -16,14 +16,24 @@ export async function scrapeManhwa(sourceUrl, titleHint = '') {
     } catch (err) {
       if (err.message.includes('404') && titleHint) {
         console.log(`  🔍 404 detected. Attempting smart search for: "${titleHint}"`);
-        const searchUrl = `https://kingofshojo.com/?s=${encodeURIComponent(titleHint)}`;
-        const searchHtml = await fetchHtml(searchUrl);
-        const $search = cheerio.load(searchHtml);
         
-        // Get the first result from the search page
-        const firstResult = $search('.bsx a').first().attr('href');
+        // Try exact first, then a cleaned version
+        const searchTerms = [
+          titleHint,
+          titleHint.replace(/['’]/g, '').replace(/[^\w\s]/g, ' ').trim() // Remove punctuation
+        ];
+
+        let firstResult = null;
+        for (const term of searchTerms) {
+          const searchUrl = `https://kingofshojo.com/?s=${encodeURIComponent(term)}`;
+          const searchHtml = await fetchHtml(searchUrl);
+          const $search = cheerio.load(searchHtml);
+          firstResult = $search('.bsx a').first().attr('href');
+          if (firstResult && firstResult.includes('/manga/')) break;
+        }
+
         if (firstResult && firstResult.includes('/manga/')) {
-          console.log(`  ✨ Found correct URL via search: ${firstResult}`);
+          console.log(`  ✨ Found correct URL via fuzzy search: ${firstResult}`);
           sourceUrl = firstResult;
           html = await fetchHtml(sourceUrl);
         } else {
