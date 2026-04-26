@@ -59,16 +59,19 @@ router.post('/heal-meta', authenticate, requireAdmin, async (req, res) => {
         const Manhwa = (await import('../models/Manhwa.js')).default;
         const { scrapeManhwa } = await import('../scraper/scrapeManhwa.js');
         
-        // Find all manhwas that have empty or missing genres
+        // Find all manhwas that have empty or missing genres, or N/A metadata
         const manhwas = await Manhwa.find({
           $or: [
             { genres: { $exists: false } },
             { genres: { $size: 0 } },
             { genres: null },
-            { genres: [null] }
+            { author: 'N/A' },
+            { author: 'Unknown' },
+            { artist: 'N/A' },
+            { artist: 'Unknown' }
           ]
         }).select('slug sourceUrl');
-        console.log(`Found ${manhwas.length} manhwas missing genres to verify...`);
+        console.log(`Found ${manhwas.length} manhwas needing metadata healing...`);
         
         let healed = 0;
         for (const m of manhwas) {
@@ -77,6 +80,9 @@ router.post('/heal-meta', authenticate, requireAdmin, async (req, res) => {
             await Manhwa.findByIdAndUpdate(m._id, {
               status: detail.status,
               genres: detail.genres,
+              author: detail.author,
+              artist: detail.artist,
+              synopsis: detail.synopsis, // Sync synopsis too while we're at it
             });
             healed++;
             if (healed % 10 === 0) console.log(`[Heal Progress] ${healed}/${manhwas.length} verified.`);

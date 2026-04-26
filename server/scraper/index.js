@@ -433,6 +433,8 @@ async function scrapeSingle(slug) {
       manhwaDoc.synopsis = detail.synopsis;
       manhwaDoc.status = detail.status;
       manhwaDoc.genres = detail.genres;
+      manhwaDoc.author = detail.author;
+      manhwaDoc.artist = detail.artist;
       if (detail.cover) manhwaDoc.cover = detail.cover;
     }
 
