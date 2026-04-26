@@ -102,13 +102,20 @@ router.post('/heal-meta', authenticate, requireAdmin, async (req, res) => {
 /* POST /api/scraper/single — scrape single manhwa */
 router.post('/single', authenticate, requireAdmin, async (req, res) => {
   try {
-    const { slug } = req.body;
+    const { slug, sourceUrl } = req.body;
     if (!slug) return res.status(400).json({ message: 'Slug required' });
+
+    // If a manual source URL is provided, update the manhwa document first
+    if (sourceUrl) {
+      const Manhwa = (await import('../models/Manhwa.js')).default;
+      await Manhwa.findOneAndUpdate({ slug }, { sourceUrl });
+      console.log(`[Admin] Updated sourceUrl for ${slug} to ${sourceUrl}`);
+    }
 
     // Run in background
     scrapeSingle(slug).catch(err => console.error('Single Scrape Error:', err));
     
-    res.json({ message: `Scrape job for ${slug} started in background.` });
+    res.json({ message: `Scrape job for ${slug} started in background${sourceUrl ? ' with new source URL' : ''}.` });
   } catch (err) {
     res.status(500).json({ message: 'Failed to start scrape', error: err.message });
   }

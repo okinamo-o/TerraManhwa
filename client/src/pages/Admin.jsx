@@ -77,13 +77,17 @@ export default function Admin() {
     }
   };
 
+  const [scrapeInput, setScrapeInput] = useState('');
+  const [sourceUrlInput, setSourceUrlInput] = useState('');
+
   const handleScrape = async () => {
     if (!scrapeInput.trim()) return toast.error('Enter a slug');
     try {
       setSubmitting(true);
-      await adminService.scrape(scrapeInput.trim());
+      await adminService.scrape(scrapeInput.trim(), sourceUrlInput.trim() || undefined);
       toast.success(`Scrape triggered for ${scrapeInput}`);
       setScrapeInput('');
+      setSourceUrlInput('');
     } catch (err) {
       toast.error('Failed to trigger scrape');
     } finally {
@@ -317,14 +321,24 @@ export default function Admin() {
                 <div className="bg-terra-card border border-terra-border rounded-xl p-5">
                   <h3 className="font-display tracking-wider mb-3">SINGLE SCRAPE</h3>
                   <p className="text-sm text-terra-muted mb-5">Manually trigger the indexing system for a specific title.</p>
-                  <div className="flex gap-3">
-                    <input
-                      value={scrapeInput}
-                      onChange={(e) => setScrapeInput(e.target.value)}
-                      placeholder="Enter source slug (e.g., solo-leveling)"
-                      className="flex-1 px-4 py-2.5 bg-terra-bg border border-terra-border rounded-lg text-sm text-terra-text placeholder:text-terra-muted/50 focus:outline-none focus:border-terra-red"
-                    />
-                    <Button variant="primary" size="sm" onClick={handleScrape} loading={submitting}>Trigger Scrape</Button>
+                  <div className="space-y-3">
+                    <div className="flex gap-3">
+                      <input
+                        value={scrapeInput}
+                        onChange={(e) => setScrapeInput(e.target.value)}
+                        placeholder="Enter library slug (e.g., solo-leveling)"
+                        className="flex-1 px-4 py-2.5 bg-terra-bg border border-terra-border rounded-lg text-sm text-terra-text placeholder:text-terra-muted/50 focus:outline-none focus:border-terra-red"
+                      />
+                      <Button variant="primary" size="sm" onClick={handleScrape} loading={submitting}>Trigger Scrape</Button>
+                    </div>
+                    <div className="relative">
+                      <input
+                        value={sourceUrlInput}
+                        onChange={(e) => setSourceUrlInput(e.target.value)}
+                        placeholder="Optional: Override Source URL (e.g., https://kingofshojo.com/manga/slug/)"
+                        className="w-full px-4 py-2.5 bg-terra-bg border border-terra-border rounded-lg text-xs text-terra-text placeholder:text-terra-muted/50 focus:outline-none focus:border-terra-red"
+                      />
+                    </div>
                   </div>
                 </div>
 

@@ -37,7 +37,7 @@ export const commentService = {
 
 export const adminService = {
   getStats: () => api.get('/admin/stats'),
-  scrape: (slug) => api.post('/scraper/single', { slug }),
+  scrape: (slug, sourceUrl) => api.post('/scraper/single', { slug, sourceUrl }),
   getScraperLogs: () => api.get('/scraper/logs'),
   getUsers: (params) => api.get('/admin/users', { params }),
   updateRole: (id, role) => api.put(`/admin/users/${id}/role`, { role }),
