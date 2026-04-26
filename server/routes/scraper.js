@@ -81,7 +81,11 @@ router.post('/heal-meta', authenticate, requireAdmin, async (req, res) => {
             // Pass title as hint for smart-search if 404
             const detail = await scrapeManhwa(m.sourceUrl, m.title);
             
-            console.log(`[Heal] Updating ${m.slug}: Author: ${detail.author}, Artist: ${detail.artist}`);
+            if (detail.author === 'Unknown' || detail.artist === 'Unknown') {
+               console.log(`  ⚠️ [Heal Warning] ${m.slug}: Source site returned "n/a" or placeholder. Saved as "Unknown".`);
+            } else {
+               console.log(`  ✅ [Heal Success] ${m.slug}: Author: ${detail.author}, Artist: ${detail.artist}`);
+            }
             
             const updateData = {
               status: detail.status,

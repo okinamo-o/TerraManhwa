@@ -52,13 +52,21 @@ export async function scrapeManhwa(sourceUrl, titleHint = '') {
       
       // Try infotable with case-insensitive search
       $('.infotable tr').each((i, el) => {
-        const rowText = $(el).find('td:first-child').text().toLowerCase();
-        if (rowText.includes(lowerLabel)) {
+        const firstTd = $(el).find('td:first-child').text().toLowerCase();
+        if (firstTd.includes(lowerLabel)) {
           val = $(el).find('td:last-child').text().trim();
         }
       });
 
-      if (val && val !== 'N/A' && val !== 'Unknown') return val;
+      // If placeholder found, treat as empty so fallback can try other sources/labels
+      if (val) {
+        const lowerVal = val.toLowerCase();
+        if (lowerVal === 'n/a' || lowerVal === 'na' || lowerVal === 'unknown' || lowerVal === 'none' || lowerVal === '-') {
+          val = '';
+        }
+      }
+
+      if (val) return val;
 
       // Try imptdt
       $('.imptdt').each((i, el) => {
@@ -67,6 +75,14 @@ export async function scrapeManhwa(sourceUrl, titleHint = '') {
           val = $(el).find('i').text().trim() || $(el).find('span').text().trim() || $(el).text().replace(label, '').replace(/:/g, '').trim();
         }
       });
+      
+      // Second placeholder check
+      if (val) {
+        const lowerVal = val.toLowerCase();
+        if (lowerVal === 'n/a' || lowerVal === 'na' || lowerVal === 'unknown' || lowerVal === 'none' || lowerVal === '-') {
+          val = '';
+        }
+      }
       
       return val;
     };
