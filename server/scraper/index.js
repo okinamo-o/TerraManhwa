@@ -447,30 +447,44 @@ async function scrapeSingle(slug) {
     await manhwaDoc.save();
     console.log(`  ✅ Manhwa metadata updated: ${detail.title}`);
 
-    // Process Chapters
-    const existingChapters = await Chapter.find({ manhwaId: manhwaDoc._id }).select('chapterNumber');
-    const existingNums = new Set(existingChapters.map(c => c.chapterNumber));
-    const newChs = detail.chapters.filter(ch => !existingNums.has(ch.chapterNumber));
+    // Process Chapters: New ones OR existing ones that are "empty shells" (no pages)
+    const existingChapters = await Chapter.find({ manhwaId: manhwaDoc._id }).select('chapterNumber pages');
+    const existingMap = new Map(existingChapters.map(c => [c.chapterNumber, c]));
+    
+    const newOrEmptyChs = detail.chapters.filter(ch => {
+      const existing = existingMap.get(ch.chapterNumber);
+      return !existing || (existing.pages && existing.pages.length === 0);
+    });
 
-    console.log(`  📥 Found ${detail.chapters.length} total, ${newChs.length} are new.`);
+    console.log(`  📥 Found ${detail.chapters.length} total, ${newOrEmptyChs.length} need processing (new or empty).`);
 
-    for (const ch of newChs) {
+    for (const ch of newOrEmptyChs) {
       try {
         const pages = await scrapeChapter(ch.sourceUrl);
         if (pages.length === 0) continue;
 
-        // Use source URLs directly — Cloudinary free tier can't handle thousands of chapter pages
+        // Use source URLs directly
         const uploadedPages = pages.map((pageUrl, i) => ({ url: pageUrl, order: i }));
 
-        const chapterDoc = await Chapter.create({
-          manhwaId: manhwaDoc._id,
-          chapterNumber: ch.chapterNumber,
-          title: ch.title,
-          pages: uploadedPages, // Already mapped in uploadChapterPages
-          sourceUrl: ch.sourceUrl,
-        });
-
-        manhwaDoc.chapters.push(chapterDoc._id);
+        const existing = existingMap.get(ch.chapterNumber);
+        if (existing) {
+          // Update existing shell
+          existing.pages = uploadedPages;
+          await existing.save();
+          console.log(`    ⭐ Updated shell Chapter ${ch.chapterNumber}`);
+        } else {
+          // Create new chapter
+          const chapterDoc = await Chapter.create({
+            manhwaId: manhwaDoc._id,
+            chapterNumber: ch.chapterNumber,
+            title: ch.title,
+            pages: uploadedPages,
+            sourceUrl: ch.sourceUrl,
+          });
+          manhwaDoc.chapters.push(chapterDoc._id);
+          console.log(`    ⭐ Added new Chapter ${ch.chapterNumber}`);
+        }
+        
         manhwaDoc.latestChapter = Math.max(manhwaDoc.latestChapter || 0, ch.chapterNumber);
         await manhwaDoc.save();
         
