@@ -412,6 +412,7 @@ async function scrapeSingle(slug) {
       sourceUrl = `${config.baseURL}/manga/${slug}/`;
     }
     
+    let manhwaDoc = await Manhwa.findOne({ slug });
     console.log(`  🌐 Target URL: ${sourceUrl}`);
     const detail = await scrapeManhwa(sourceUrl, manhwaDoc?.title || slug);
     if (!detail) throw new Error('No data found for this slug');
