@@ -403,7 +403,7 @@ async function targetedBatchScrape() {
 /**
  * Scrape Single Manhwa — Full Depth (Metadata + Chapters)
  */
-export async function scrapeSingle(slug) {
+async function scrapeSingle(slug) {
   console.log(`\n🔍 STARTING SINGLE SCRAPE [v2.1] — Slug: ${slug}`);
   try {
     // Construct full URL if only slug provided
