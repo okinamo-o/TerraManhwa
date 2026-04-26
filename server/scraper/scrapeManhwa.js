@@ -16,15 +16,35 @@ export async function scrapeManhwa(sourceUrl) {
     const synopsis = $('.entry-content p').text().trim() || $('.entry-content').text().trim();
     const cover = $('.thumb img').attr('src');
     
-    // Aggressive Metadata parsing that handles various MangaTheme DOM structures
     const getMeta = (label) => {
-      let val = $('.infotable tr').filter((i, el) => $(el).text().includes(label)).find('td:last-child').text().trim();
-      if (val) return val;
+      const lowerLabel = label.toLowerCase();
+      let val = '';
+      
+      // Try infotable with case-insensitive search
+      $('.infotable tr').each((i, el) => {
+        const rowText = $(el).find('td:first-child').text().toLowerCase();
+        if (rowText.includes(lowerLabel)) {
+          val = $(el).find('td:last-child').text().trim();
+        }
+      });
 
-      const impt = $('.imptdt').filter((i, el) => $(el).text().includes(label));
-      val = impt.find('i').text().trim() || impt.find('span').text().trim() || impt.text().replace(label, '').trim();
+      if (val && val !== 'N/A' && val !== 'Unknown') return val;
+
+      // Try imptdt
+      $('.imptdt').each((i, el) => {
+        const rowText = $(el).text().toLowerCase();
+        if (rowText.includes(lowerLabel)) {
+          val = $(el).find('i').text().trim() || $(el).find('span').text().trim() || $(el).text().replace(label, '').replace(/:/g, '').trim();
+        }
+      });
+      
       return val;
     };
+
+    // Aggressive fallbacks for labels
+    const author = getMeta('Author') || getMeta('Writer') || getMeta('Creator') || 'Unknown';
+    const artist = getMeta('Artist') || getMeta('Illustrator') || getMeta('Painter') || 'Unknown';
+    const type = getMeta('Type') || 'Manhwa';
 
     const genres = [];
     $('.genre-info a, .mgen a, a[rel="tag"]').each((i, el) => {
@@ -42,10 +62,6 @@ export async function scrapeManhwa(sourceUrl) {
     else if (rawStatus.includes('hiatus')) normalizedStatus = 'Hiatus';
     else if (rawStatus.includes('dropped')) normalizedStatus = 'Dropped';
     else if (rawStatus.includes('ongoing') || rawStatus.includes('on going')) normalizedStatus = 'Ongoing';
-    
-    const author = getMeta('Author') || 'Unknown';
-    const artist = getMeta('Artist') || 'Unknown';
-    const type = getMeta('Type') || 'Manhwa';
     
     const chapters = [];
     $('.eplister li').each((i, el) => {

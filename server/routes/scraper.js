@@ -79,12 +79,13 @@ router.post('/heal-meta', authenticate, requireAdmin, async (req, res) => {
         for (const m of manhwas) {
           try {
             const detail = await scrapeManhwa(m.sourceUrl);
+            console.log(`[Heal] Updating ${m.slug}: Author: ${detail.author}, Artist: ${detail.artist}`);
             await Manhwa.findByIdAndUpdate(m._id, {
               status: detail.status,
               genres: detail.genres,
               author: detail.author,
               artist: detail.artist,
-              synopsis: detail.synopsis, // Sync synopsis too while we're at it
+              synopsis: detail.synopsis,
             });
             healed++;
             if (healed % 10 === 0) console.log(`[Heal Progress] ${healed}/${manhwas.length} verified.`);
