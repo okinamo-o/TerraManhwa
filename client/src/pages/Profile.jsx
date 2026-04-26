@@ -27,10 +27,11 @@ export default function Profile() {
   const [newCol, setNewCol] = useState({ title: '', description: '', manhwas: [], isPublic: true });
   const [error, setError] = useState(null);
 
-  const isOwnProfile = currentUser?.username === username;
+  const targetUsername = username || currentUser?.username;
+  const isOwnProfile = !username || currentUser?.username === username;
 
   useEffect(() => {
-    if (!username) return;
+    if (!targetUsername) return;
 
     (async () => {
       try {
@@ -38,8 +39,8 @@ export default function Profile() {
         setError(null);
         
         const [userRes, commentsRes, collectionsRes] = await Promise.all([
-          userService.getProfile(username),
-          commentService.getUserComments(username),
+          userService.getProfile(targetUsername),
+          commentService.getUserComments(targetUsername),
           isOwnProfile ? collectionService.getMe() : collectionService.getAll()
         ]);
         
@@ -47,7 +48,7 @@ export default function Profile() {
         setComments(commentsRes.data.data || commentsRes.data || []);
         
         const allCols = collectionsRes.data.data || collectionsRes.data || [];
-        setCollections(isOwnProfile ? allCols : allCols.filter(c => c.owner?.username === username));
+        setCollections(isOwnProfile ? allCols : allCols.filter(c => c.owner?.username === targetUsername));
       } catch (err) {
         console.error('Failed to load profile:', err);
         setError('User not found or server error');
@@ -55,7 +56,7 @@ export default function Profile() {
         setLoading(false);
       }
     })();
-  }, [username]);
+  }, [targetUsername, isOwnProfile]);
 
   const handleCreateCollection = async (e) => {
     e.preventDefault();
@@ -88,12 +89,12 @@ export default function Profile() {
     }));
   };
 
-  if (!username) return (
+  if (!targetUsername) return (
     <div className="text-center py-20 px-4">
       <HiUserCircle size={64} className="mx-auto mb-4 text-terra-muted opacity-30" />
-      <h2 className="text-2xl font-display mb-2">Profile Missing</h2>
-      <p className="text-terra-muted mb-8">No username provided in the URL.</p>
-      <Link to="/"><Button variant="primary">Return Home</Button></Link>
+      <h2 className="text-2xl font-display mb-2">Login Required</h2>
+      <p className="text-terra-muted mb-8">Please login to view your profile and collections.</p>
+      <Link to="/login"><Button variant="primary">Go to Login</Button></Link>
     </div>
   );
 
