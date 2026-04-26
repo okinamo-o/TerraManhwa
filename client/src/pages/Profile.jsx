@@ -40,12 +40,14 @@ export default function Profile() {
         const [userRes, commentsRes, collectionsRes] = await Promise.all([
           userService.getProfile(username),
           commentService.getUserComments(username),
-          collectionService.getAll().then(res => ({ data: res.data.data.filter(c => c.owner?.username === username) })) // Filter for this user
+          isOwnProfile ? collectionService.getMe() : collectionService.getAll()
         ]);
         
         setProfile(userRes.data.data || userRes.data);
         setComments(commentsRes.data.data || commentsRes.data || []);
-        setCollections(collectionsRes.data || []);
+        
+        const allCols = collectionsRes.data.data || collectionsRes.data || [];
+        setCollections(isOwnProfile ? allCols : allCols.filter(c => c.owner?.username === username));
       } catch (err) {
         console.error('Failed to load profile:', err);
         setError('User not found or server error');
@@ -296,8 +298,11 @@ export default function Profile() {
                          {c.manhwas[0] ? <img src={c.manhwas[0]?.cover} className="w-full h-full object-cover" /> : <HiCollection size={24} className="text-terra-muted opacity-20" />}
                       </div>
                       <div className="flex-1 min-w-0 flex flex-col justify-center">
-                         <h4 className="font-display tracking-wider group-hover:text-terra-red transition-colors truncate">{c.title}</h4>
-                         <p className="text-[10px] text-terra-muted uppercase font-bold tracking-widest mt-1">{c.manhwas.length} Titles • {c.views} Views</p>
+                         <div className="flex items-center gap-2">
+                           <h4 className="font-display tracking-wider group-hover:text-terra-red transition-colors truncate">{c.title}</h4>
+                           <span className="px-1.5 py-0.5 rounded bg-terra-red/10 text-terra-red text-[8px] font-bold">{c.manhwas?.length || 0}</span>
+                         </div>
+                         <p className="text-[10px] text-terra-muted uppercase font-bold tracking-widest mt-1">{c.views} Views</p>
                       </div>
                     </Link>
                     {isOwnProfile && (

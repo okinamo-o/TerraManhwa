@@ -81,6 +81,63 @@ router.put('/:id', authenticate, async (req, res) => {
   }
 });
 
+/* POST /api/collections/:id/like — Toggle like */
+router.post('/:id/like', authenticate, async (req, res) => {
+  try {
+    const collection = await Collection.findById(req.params.id);
+    if (!collection) return res.status(404).json({ message: 'Collection not found' });
+
+    const userId = req.user._id.toString();
+    const idx = collection.likes.findIndex(id => id.toString() === userId);
+    
+    if (idx === -1) {
+      collection.likes.push(req.user._id);
+    } else {
+      collection.likes.splice(idx, 1);
+    }
+    
+    await collection.save();
+    res.json({ data: { liked: idx === -1, likesCount: collection.likes.length } });
+  } catch (err) {
+    res.status(500).json({ message: 'Failed to toggle like', error: err.message });
+  }
+});
+
+/* POST /api/collections/:id/manhwas — Add manhwa to collection */
+router.post('/:id/manhwas', authenticate, async (req, res) => {
+  try {
+    const { manhwaId } = req.body;
+    const collection = await Collection.findOne({ _id: req.params.id, owner: req.user._id });
+    if (!collection) return res.status(404).json({ message: 'Collection not found or unauthorized' });
+
+    if (!collection.manhwas.includes(manhwaId)) {
+      collection.manhwas.push(manhwaId);
+      await collection.save();
+    }
+
+    const populated = await collection.populate('manhwas', 'title cover slug');
+    res.json({ data: populated });
+  } catch (err) {
+    res.status(500).json({ message: 'Failed to add manhwa', error: err.message });
+  }
+});
+
+/* DELETE /api/collections/:id/manhwas/:manhwaId — Remove manhwa from collection */
+router.delete('/:id/manhwas/:manhwaId', authenticate, async (req, res) => {
+  try {
+    const collection = await Collection.findOne({ _id: req.params.id, owner: req.user._id });
+    if (!collection) return res.status(404).json({ message: 'Collection not found or unauthorized' });
+
+    collection.manhwas = collection.manhwas.filter(id => id.toString() !== req.params.manhwaId);
+    await collection.save();
+
+    const populated = await collection.populate('manhwas', 'title cover slug');
+    res.json({ data: populated });
+  } catch (err) {
+    res.status(500).json({ message: 'Failed to remove manhwa', error: err.message });
+  }
+});
+
 /* DELETE /api/collections/:id — Delete collection */
 router.delete('/:id', authenticate, async (req, res) => {
   try {

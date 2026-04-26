@@ -1,17 +1,18 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
-import { HiStar, HiEye, HiBookmark, HiBookOpen, HiSortDescending, HiSortAscending, HiHeart } from 'react-icons/hi';
+import { HiStar, HiEye, HiBookmark, HiBookOpen, HiSortDescending, HiSortAscending, HiHeart, HiCollection, HiCheck } from 'react-icons/hi';
 import Badge from '../components/ui/Badge';
 import Button from '../components/ui/Button';
 import ManhwaCard from '../components/manhwa/ManhwaCard';
 import { SkeletonBlock, SkeletonLine } from '../components/ui/Skeleton';
 import Spinner from '../components/ui/Spinner';
-import { manhwaService } from '../services/manhwaService';
+import { manhwaService, collectionService } from '../services/manhwaService';
 import { useBookmarkStore } from '../store/bookmarkStore';
 import { useAuthStore } from '../store/authStore';
 import { useReadingProgressStore } from '../store/readerStore';
 import CommentSection from '../components/manhwa/CommentSection';
+import toast from 'react-hot-toast';
 
 export default function ManhwaDetail() {
   const { slug } = useParams();
@@ -30,6 +31,9 @@ export default function ManhwaDetail() {
   const progress = useReadingProgressStore((s) => s.getProgress(slug));
   const [related, setRelated] = useState([]);
   const [error, setError] = useState(null);
+  const [myCollections, setMyCollections] = useState([]);
+  const [showColDropdown, setShowColDropdown] = useState(false);
+  const colDropdownRef = useRef(null);
 
   const [showLongLoadMsg, setShowLongLoadMsg] = useState(false);
 
@@ -42,6 +46,22 @@ export default function ManhwaDetail() {
     }
     return () => clearTimeout(timer);
   }, [loading]);
+
+  // Fetch user's collections for the dropdown
+  useEffect(() => {
+    if (user) {
+      collectionService.getMe().then(res => setMyCollections(res.data.data || [])).catch(() => {});
+    }
+  }, [user]);
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    const handler = (e) => {
+      if (colDropdownRef.current && !colDropdownRef.current.contains(e.target)) setShowColDropdown(false);
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -216,6 +236,65 @@ export default function ManhwaDetail() {
                 <HiHeart size={18} className={bookmarked ? 'animate-pulse' : ''} />
                 {bookmarked ? 'Bookmarked' : 'Bookmark'}
               </Button>
+
+              {/* Add to Collection */}
+              {user && (
+                <div className="relative" ref={colDropdownRef}>
+                  <Button
+                    variant="secondary"
+                    size="lg"
+                    onClick={() => setShowColDropdown(!showColDropdown)}
+                  >
+                    <HiCollection size={18} />
+                    Add to List
+                  </Button>
+
+                  {showColDropdown && (
+                    <div className="absolute top-full left-0 mt-2 w-64 bg-terra-card border border-terra-border rounded-xl shadow-2xl z-50 overflow-hidden animate-fade-in">
+                      <div className="p-3 border-b border-terra-border">
+                        <p className="text-[10px] uppercase tracking-widest font-bold text-terra-muted">Your Collections</p>
+                      </div>
+                      {myCollections.length > 0 ? (
+                        <div className="max-h-48 overflow-y-auto">
+                          {myCollections.map(col => {
+                            const isIn = col.manhwas?.some(m => (m._id || m) === manhwa._id);
+                            return (
+                              <button
+                                key={col._id}
+                                className="w-full flex items-center gap-3 px-4 py-3 text-left text-sm hover:bg-terra-bg transition-colors"
+                                onClick={async () => {
+                                  try {
+                                    if (isIn) {
+                                      await collectionService.removeManhwa(col._id, manhwa._id);
+                                      setMyCollections(prev => prev.map(c => c._id === col._id ? { ...c, manhwas: c.manhwas.filter(m => (m._id || m) !== manhwa._id) } : c));
+                                      toast.success(`Removed from "${col.title}"`);
+                                    } else {
+                                      await collectionService.addManhwa(col._id, manhwa._id);
+                                      setMyCollections(prev => prev.map(c => c._id === col._id ? { ...c, manhwas: [...c.manhwas, manhwa._id] } : c));
+                                      toast.success(`Added to "${col.title}"`);
+                                    }
+                                  } catch { toast.error('Failed'); }
+                                }}
+                              >
+                                <div className={`w-5 h-5 rounded border flex items-center justify-center shrink-0 transition-colors ${isIn ? 'bg-terra-red border-terra-red' : 'border-terra-border'}`}>
+                                  {isIn && <HiCheck size={14} className="text-white" />}
+                                </div>
+                                <span className="truncate">{col.title}</span>
+                                <span className="ml-auto text-[10px] text-terra-muted">{col.manhwas?.length || 0}</span>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      ) : (
+                        <div className="p-4 text-center text-sm text-terra-muted">
+                          No collections yet.
+                          <Link to={`/profile/${user.username}`} className="block text-terra-red mt-1 hover:underline">Create one →</Link>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
 
             {/* Synopsis */}

@@ -72,7 +72,7 @@ export default function Collections() {
 
         {loading ? (
           <div className="flex justify-center py-20"><Spinner size="lg" /></div>
-        ) : (
+        ) : collections.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {collections.map((col) => (
               <Link 
@@ -83,7 +83,7 @@ export default function Collections() {
                 {/* Visual Header - Stacked covers effect */}
                 <div className="relative h-48 bg-terra-bg flex items-center justify-center p-4 overflow-hidden">
                   <div className="absolute inset-0 opacity-20 grayscale scale-110 blur-sm">
-                    <img src={col.manhwas[0]?.cover} className="w-full h-full object-cover" alt="" />
+                    {col.manhwas[0]?.cover && <img src={col.manhwas[0].cover} className="w-full h-full object-cover" alt="" />}
                   </div>
                   <div className="relative flex -space-x-12">
                     {col.manhwas.slice(0, 3).map((m, i) => (
@@ -118,6 +118,21 @@ export default function Collections() {
                 </div>
               </Link>
             ))}
+          </div>
+        ) : (
+          <div className="text-center py-24">
+            <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-terra-card border border-terra-border flex items-center justify-center">
+              <HiCollection size={36} className="text-terra-muted opacity-40" />
+            </div>
+            <h2 className="font-display text-3xl mb-3 tracking-wider">NO COLLECTIONS YET</h2>
+            <p className="text-terra-muted text-lg max-w-md mx-auto mb-8">
+              Be the first to create a curated playlist! Group your favorite manhwa titles together and share them with the community.
+            </p>
+            <Link to="/profile">
+              <Button variant="primary" className="rounded-full px-8 py-3">
+                <HiPlus size={20} className="mr-2" /> Create First Collection
+              </Button>
+            </Link>
           </div>
         )}
       </div>

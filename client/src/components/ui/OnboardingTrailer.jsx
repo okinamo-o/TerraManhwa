@@ -21,7 +21,7 @@ export default function OnboardingTrailer({ onClose }) {
     },
     {
       title: "ADD WITH ONE CLICK",
-      desc: "Coming soon: Add any manhwa directly to your playlists from the Detail page or Profile. Mix genres, authors, and status to create the perfect reading list.",
+      desc: "Add any manhwa directly to your playlists from the Detail page or Profile. Mix genres, authors, and status to create the perfect reading list.",
       icon: <HiPlus className="text-blue-400" size={40} />,
       visual: (
         <div className="relative w-full h-40 bg-terra-bg rounded-2xl border border-white/5 flex items-center justify-center">

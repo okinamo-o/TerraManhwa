@@ -63,6 +63,9 @@ export const collectionService = {
   create: (data) => api.post('/collections', data),
   update: (id, data) => api.put(`/collections/${id}`, data),
   delete: (id) => api.delete(`/collections/${id}`),
+  like: (id) => api.post(`/collections/${id}/like`),
+  addManhwa: (id, manhwaId) => api.post(`/collections/${id}/manhwas`, { manhwaId }),
+  removeManhwa: (id, manhwaId) => api.delete(`/collections/${id}/manhwas/${manhwaId}`),
 };
 
 export const userService = {
