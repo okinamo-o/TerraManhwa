@@ -51,76 +51,49 @@ router.post('/heal-meta', authenticate, requireAdmin, async (req, res) => {
   if (isScraperRunning) {
     return res.status(409).json({ message: 'A scrape job is already running.' });
   }
-  try {
-    isScraperRunning = true;
-    (async () => {
-      try {
-        console.log('🚀 Background Meta-Heal Started');
-        const Manhwa = (await import('../models/Manhwa.js')).default;
-        const { scrapeManhwa } = await import('../scraper/scrapeManhwa.js');
-        
-        // More aggressive filter to catch ANY placeholder or missing metadata
-        const manhwas = await Manhwa.find({
-          $or: [
-            { genres: { $exists: false } },
-            { genres: { $size: 0 } },
-            { genres: null },
-            { author: { $in: [null, '', 'N/A', 'n/a', 'Unknown', 'unknown', 'N/A ', ' n/a'] } },
-            { artist: { $in: [null, '', 'N/A', 'n/a', 'Unknown', 'unknown', 'N/A ', ' n/a'] } },
-            { author: /n\/a/i },
-            { artist: /n\/a/i },
-            { author: /unknown/i },
-            { artist: /unknown/i }
-          ]
-        }).select('slug sourceUrl title'); // Need title for hint
-        console.log(`Found ${manhwas.length} manhwas needing metadata healing...`);
-        
-        let healed = 0;
-        for (const m of manhwas) {
-          try {
-            // Pass title as hint for smart-search if 404
-            const detail = await scrapeManhwa(m.sourceUrl, m.title);
-            
-            if (detail.author === 'Unknown' || detail.artist === 'Unknown') {
-               console.log(`  ⚠️ [Heal Warning] ${m.slug}: Source site returned "n/a" or placeholder. Saved as "Unknown".`);
-            } else {
-               console.log(`  ✅ [Heal Success] ${m.slug}: Author: ${detail.author}, Artist: ${detail.artist}`);
-            }
-            
-            const updateData = {
-              status: detail.status,
-              genres: detail.genres,
-              author: detail.author,
-              artist: detail.artist,
-              synopsis: detail.synopsis,
-            };
 
-            // If the URL changed (smart search found the correct one), update it in DB!
-            if (detail.sourceUrl && detail.sourceUrl !== m.sourceUrl) {
-              console.log(`  ✨ Healing sourceUrl for ${m.slug}: ${m.sourceUrl} -> ${detail.sourceUrl}`);
-              updateData.sourceUrl = detail.sourceUrl;
-            }
+  isScraperRunning = true;
+  
+  // Respond immediately
+  res.json({ message: 'Background library repair job started! Check Render logs for progress.' });
 
-            await Manhwa.findByIdAndUpdate(m._id, updateData);
-            healed++;
-            if (healed % 10 === 0) console.log(`[Heal Progress] ${healed}/${manhwas.length} verified.`);
-          } catch(e) {
-            console.error(`[Heal Error] Failed on ${m.slug}: ${e.message}`);
-          }
-          await new Promise(r => setTimeout(r, 200)); 
+  // Run in background
+  (async () => {
+    try {
+      console.log('🚀 Background Library Repair Started');
+      const Manhwa = (await import('../models/Manhwa.js')).default;
+      const { scrapeSingle } = await import('../scraper/index.js');
+      
+      const manhwas = await Manhwa.find({
+        $or: [
+          { genres: { $size: 0 } },
+          { author: { $in: [null, '', 'Unknown', 'unknown'] } },
+          { author: /n\/a/i },
+          { latestChapter: 0 },
+          { latestChapter: { $exists: false } }
+        ]
+      }).select('slug title sourceUrl');
+
+      console.log(`🚀 Starting Full Library Repair for ${manhwas.length} items...`);
+      
+      let repaired = 0;
+      for (const m of manhwas) {
+        try {
+          console.log(`\n[Repair ${repaired + 1}/${manhwas.length}] Processing: ${m.title} (${m.slug})`);
+          await scrapeSingle(m.slug);
+          repaired++;
+          await new Promise(r => setTimeout(r, 1000)); // Safer delay
+        } catch(e) {
+          console.error(`  ❌ Repair failed for ${m.slug}: ${e.message}`);
         }
-        console.log(`✅ Background Meta-Heal Finished. Verified ${healed} items.`);
-      } catch (err) {
-        console.error('Background Heal Error:', err);
-      } finally {
-        isScraperRunning = false;
       }
-    })();
-    res.json({ message: 'Background metadata heal job started! Check Render logs for progress.' });
-  } catch (err) {
-    isScraperRunning = false;
-    res.status(500).json({ message: 'Failed to start heal', error: err.message });
-  }
+      console.log(`✅ Library Repair Finished. Successfully processed ${repaired} items.`);
+    } catch (err) {
+      console.error('Library Repair Task Error:', err);
+    } finally {
+      isScraperRunning = false;
+    }
+  })();
 });
 
 /* POST /api/scraper/single — scrape single manhwa */

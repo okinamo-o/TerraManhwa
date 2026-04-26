@@ -105,7 +105,7 @@ export async function scrapeManhwa(sourceUrl, titleHint = '') {
     const genres = [];
     $('.genre-info a, .mgen a, a[rel="tag"]').each((i, el) => {
       const g = $(el).text().trim();
-      if (g && !genres.includes(g)) {
+      if (g && g.toLowerCase() !== 'n/a' && g.toLowerCase() !== 'na' && !genres.includes(g)) {
         genres.push(g);
       }
     });
