@@ -59,16 +59,18 @@ router.post('/heal-meta', authenticate, requireAdmin, async (req, res) => {
         const Manhwa = (await import('../models/Manhwa.js')).default;
         const { scrapeManhwa } = await import('../scraper/scrapeManhwa.js');
         
-        // Find all manhwas that have empty or missing genres, or N/A metadata
+        // More aggressive filter to catch ANY placeholder or missing metadata
         const manhwas = await Manhwa.find({
           $or: [
             { genres: { $exists: false } },
             { genres: { $size: 0 } },
             { genres: null },
-            { author: 'N/A' },
-            { author: 'Unknown' },
-            { artist: 'N/A' },
-            { artist: 'Unknown' }
+            { author: { $in: [null, '', 'N/A', 'n/a', 'Unknown', 'unknown', 'N/A ', ' n/a'] } },
+            { artist: { $in: [null, '', 'N/A', 'n/a', 'Unknown', 'unknown', 'N/A ', ' n/a'] } },
+            { author: /n\/a/i }, // Regex for safety
+            { artist: /n\/a/i },
+            { author: /unknown/i },
+            { artist: /unknown/i }
           ]
         }).select('slug sourceUrl');
         console.log(`Found ${manhwas.length} manhwas needing metadata healing...`);
