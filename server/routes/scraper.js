@@ -67,32 +67,43 @@ router.post('/heal-meta', authenticate, requireAdmin, async (req, res) => {
             { genres: null },
             { author: { $in: [null, '', 'N/A', 'n/a', 'Unknown', 'unknown', 'N/A ', ' n/a'] } },
             { artist: { $in: [null, '', 'N/A', 'n/a', 'Unknown', 'unknown', 'N/A ', ' n/a'] } },
-            { author: /n\/a/i }, // Regex for safety
+            { author: /n\/a/i },
             { artist: /n\/a/i },
             { author: /unknown/i },
             { artist: /unknown/i }
           ]
-        }).select('slug sourceUrl');
+        }).select('slug sourceUrl title'); // Need title for hint
         console.log(`Found ${manhwas.length} manhwas needing metadata healing...`);
         
         let healed = 0;
         for (const m of manhwas) {
           try {
-            const detail = await scrapeManhwa(m.sourceUrl);
+            // Pass title as hint for smart-search if 404
+            const detail = await scrapeManhwa(m.sourceUrl, m.title);
+            
             console.log(`[Heal] Updating ${m.slug}: Author: ${detail.author}, Artist: ${detail.artist}`);
-            await Manhwa.findByIdAndUpdate(m._id, {
+            
+            const updateData = {
               status: detail.status,
               genres: detail.genres,
               author: detail.author,
               artist: detail.artist,
               synopsis: detail.synopsis,
-            });
+            };
+
+            // If the URL changed (smart search found the correct one), update it in DB!
+            if (detail.sourceUrl && detail.sourceUrl !== m.sourceUrl) {
+              console.log(`  ✨ Healing sourceUrl for ${m.slug}: ${m.sourceUrl} -> ${detail.sourceUrl}`);
+              updateData.sourceUrl = detail.sourceUrl;
+            }
+
+            await Manhwa.findByIdAndUpdate(m._id, updateData);
             healed++;
             if (healed % 10 === 0) console.log(`[Heal Progress] ${healed}/${manhwas.length} verified.`);
           } catch(e) {
             console.error(`[Heal Error] Failed on ${m.slug}: ${e.message}`);
           }
-          await new Promise(r => setTimeout(r, 200)); // Be nice to the source server
+          await new Promise(r => setTimeout(r, 200)); 
         }
         console.log(`✅ Background Meta-Heal Finished. Verified ${healed} items.`);
       } catch (err) {

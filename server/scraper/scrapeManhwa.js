@@ -4,15 +4,45 @@ import { fetchHtml } from './scrapeCatalog.js';
 
 /**
  * Scrape manhwa details and chapter list from KingOfShojo
+ * With Smart-Search fallback for broken slugs
  */
-export async function scrapeManhwa(sourceUrl) {
+export async function scrapeManhwa(sourceUrl, titleHint = '') {
   console.log(`  📖 Fetching details: ${sourceUrl}`);
   
   try {
-    const html = await fetchHtml(sourceUrl);
+    let html;
+    try {
+      html = await fetchHtml(sourceUrl);
+    } catch (err) {
+      if (err.message.includes('404') && titleHint) {
+        console.log(`  🔍 404 detected. Attempting smart search for: "${titleHint}"`);
+        const searchUrl = `https://kingofshojo.com/?s=${encodeURIComponent(titleHint)}`;
+        const searchHtml = await fetchHtml(searchUrl);
+        const $search = cheerio.load(searchHtml);
+        
+        // Get the first result from the search page
+        const firstResult = $search('.bsx a').first().attr('href');
+        if (firstResult && firstResult.includes('/manga/')) {
+          console.log(`  ✨ Found correct URL via search: ${firstResult}`);
+          sourceUrl = firstResult;
+          html = await fetchHtml(sourceUrl);
+        } else {
+          throw err;
+        }
+      } else {
+        throw err;
+      }
+    }
+
     const $ = cheerio.load(html);
     
-    const title = $('.entry-title').text().trim() || sourceUrl.split('/').filter(Boolean).pop().replace(/-/g, ' ');
+    const title = $('.entry-title').text().trim() || titleHint || sourceUrl.split('/').filter(Boolean).pop().replace(/-/g, ' ');
+    
+    // Safety check: Is this a real manhwa page?
+    if (!$('.entry-title').length && !$('.thumb img').length) {
+       throw new Error('Page content missing - possible invalid slug or 404');
+    }
+
     const synopsis = $('.entry-content p').text().trim() || $('.entry-content').text().trim();
     const cover = $('.thumb img').attr('src');
     
@@ -81,8 +111,6 @@ export async function scrapeManhwa(sourceUrl) {
       }
     });
 
-    // Handle reverse order (usually they are desc, we want asc for seed but index.js handles sorting)
-    
     return {
       title,
       synopsis,
@@ -92,6 +120,7 @@ export async function scrapeManhwa(sourceUrl) {
       author,
       artist,
       chapters: chapters.reverse(), // Reverse to get oldest first for chronological ingestion
+      sourceUrl, // Return the final verified URL
     };
   } catch (err) {
     throw new Error(`Failed to scrape manhwa at ${sourceUrl}: ${err.message}`);

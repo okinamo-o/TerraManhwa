@@ -413,10 +413,9 @@ async function scrapeSingle(slug) {
     }
     
     console.log(`  🌐 Target URL: ${sourceUrl}`);
-    const detail = await scrapeManhwa(sourceUrl);
+    const detail = await scrapeManhwa(sourceUrl, manhwaDoc?.title || slug);
     if (!detail) throw new Error('No data found for this slug');
 
-    let manhwaDoc = await Manhwa.findOne({ slug });
     if (!manhwaDoc) {
       manhwaDoc = new Manhwa({
         title: detail.title,
@@ -427,6 +426,7 @@ async function scrapeSingle(slug) {
         artist: detail.artist,
         genres: detail.genres,
         status: detail.status,
+        sourceUrl: detail.sourceUrl, // Save the verified URL
       });
     } else {
       manhwaDoc.title = detail.title;
@@ -436,6 +436,12 @@ async function scrapeSingle(slug) {
       manhwaDoc.author = detail.author;
       manhwaDoc.artist = detail.artist;
       if (detail.cover) manhwaDoc.cover = detail.cover;
+      
+      // Update sourceUrl if healed
+      if (detail.sourceUrl && detail.sourceUrl !== manhwaDoc.sourceUrl) {
+        console.log(`  ✨ Healing sourceUrl: ${manhwaDoc.sourceUrl} -> ${detail.sourceUrl}`);
+        manhwaDoc.sourceUrl = detail.sourceUrl;
+      }
     }
 
     await manhwaDoc.save();
