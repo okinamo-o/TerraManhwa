@@ -23,6 +23,7 @@ import { startScheduler } from './scraper/scheduler.js';
 dotenv.config();
 
 const app = express();
+app.set('trust proxy', 1); // Trust Render's proxy for accurate rate limiting
 const PORT = process.env.PORT || 5000;
 
 /* ═══ Global Error Shielding ═══ */
