@@ -77,7 +77,6 @@ export default function Admin() {
     }
   };
 
-  const [scrapeInput, setScrapeInput] = useState('');
   const [sourceUrlInput, setSourceUrlInput] = useState('');
 
   const handleScrape = async () => {
