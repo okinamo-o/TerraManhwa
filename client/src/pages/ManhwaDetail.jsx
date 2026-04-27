@@ -83,9 +83,22 @@ export default function ManhwaDetail() {
         setManhwa(mData);
         setChapters(chs);
         
-        // Filter out the current manhwa from related
-        const relData = (relatedRes.data.data || relatedRes.data).filter(m => m.slug !== slug).slice(0, 4);
-        setRelated(relData);
+        // Fetch genre-matched related manhwa
+        const firstGenre = mData.genres?.find(g => typeof g === 'string' && g.toLowerCase() !== 'n/a');
+        if (firstGenre) {
+          try {
+            const relRes = await manhwaService.getAll({ genre: firstGenre, limit: 7 });
+            const relData = (relRes.data.data || relRes.data).filter(m => m.slug !== slug).slice(0, 6);
+            setRelated(relData);
+          } catch {
+            // Fallback to popular
+            const relData = (relatedRes.data.data || relatedRes.data).filter(m => m.slug !== slug).slice(0, 6);
+            setRelated(relData);
+          }
+        } else {
+          const relData = (relatedRes.data.data || relatedRes.data).filter(m => m.slug !== slug).slice(0, 6);
+          setRelated(relData);
+        }
 
         // If no chapters, start polling (maybe it's being scraped)
         if (chs.length === 0 && !pollInterval) {
@@ -219,24 +232,32 @@ export default function ManhwaDetail() {
               )}
             </div>
 
-            {/* Stats */}
+            {/* Stats — only show when there's real data */}
+            {(manhwa.rating?.score > 0 || manhwa.views > 0 || manhwa.bookmarkCount > 0) && (
             <div className="flex flex-wrap items-center gap-5 mb-5">
-              {manhwa.rating?.score && (
+              {manhwa.rating?.score > 0 && (
                 <div className="flex items-center gap-1.5">
                   <HiStar className="text-terra-gold" size={20} />
                   <span className="text-lg font-bold">{manhwa.rating.score.toFixed(1)}</span>
-                  <span className="text-terra-muted text-xs">({manhwa.rating.votes?.toLocaleString()} votes)</span>
+                  {manhwa.rating.votes > 0 && (
+                    <span className="text-terra-muted text-xs">({manhwa.rating.votes.toLocaleString()} votes)</span>
+                  )}
                 </div>
               )}
+              {manhwa.views > 0 && (
               <div className="flex items-center gap-1.5 text-terra-muted">
                 <HiEye size={18} />
-                <span>{(manhwa.views / 1e6).toFixed(1)}M</span>
+                <span>{formatViews(manhwa.views)}</span>
               </div>
+              )}
+              {manhwa.bookmarkCount > 0 && (
               <div className="flex items-center gap-1.5 text-terra-muted">
                 <HiBookmark size={18} />
-                <span>{(manhwa.bookmarkCount / 1e3).toFixed(1)}K</span>
+                <span>{formatViews(manhwa.bookmarkCount)}</span>
               </div>
+              )}
             </div>
+            )}
 
             {/* Genres */}
             <div className="flex flex-wrap gap-2 mb-5">
@@ -257,12 +278,19 @@ export default function ManhwaDetail() {
                 </Button>
               </Link>
               <Button
-                variant={bookmarked ? 'gold' : 'secondary'}
+                variant={user && bookmarked ? 'gold' : 'secondary'}
                 size="lg"
-                onClick={() => toggleBookmark(manhwa, user)}
+                onClick={() => {
+                  if (!user) {
+                    toast.error('Sign in to bookmark manhwa');
+                    navigate('/login');
+                    return;
+                  }
+                  toggleBookmark(manhwa, user);
+                }}
               >
-                <HiHeart size={18} className={bookmarked ? 'animate-pulse' : ''} />
-                {bookmarked ? 'Bookmarked' : 'Bookmark'}
+                <HiHeart size={18} className={user && bookmarked ? 'animate-pulse' : ''} />
+                {user && bookmarked ? 'Bookmarked' : 'Bookmark'}
               </Button>
 
               {/* Add to Collection */}
@@ -404,8 +432,8 @@ export default function ManhwaDetail() {
         {/* ═══ RELATED ═══ */}
         {related.length > 0 && (
           <section className="mt-12">
-            <h2 className="font-display text-2xl tracking-wider mb-5">RELATED MANHWA</h2>
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+            <h2 className="font-display text-2xl tracking-wider mb-5">YOU MIGHT ALSO LIKE</h2>
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
               {related.map((m) => (
                 <ManhwaCard key={m._id} manhwa={m} />
               ))}
