@@ -211,8 +211,12 @@ export default function ManhwaDetail() {
 
             {/* Meta row */}
             <div className="flex flex-wrap items-center gap-4 text-sm text-terra-muted mb-4">
-              {manhwa.author && <span>Author: <span className="text-terra-text">{manhwa.author}</span></span>}
-              {manhwa.artist && <span>Artist: <span className="text-terra-text">{manhwa.artist}</span></span>}
+              {manhwa.author && !/^(n\/a|na|unknown|-)$/i.test(manhwa.author.trim()) && (
+                <span>Author: <span className="text-terra-text">{manhwa.author}</span></span>
+              )}
+              {manhwa.artist && !/^(n\/a|na|unknown|-)$/i.test(manhwa.artist.trim()) && (
+                <span>Artist: <span className="text-terra-text">{manhwa.artist}</span></span>
+              )}
             </div>
 
             {/* Stats */}

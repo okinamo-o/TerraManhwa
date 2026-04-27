@@ -67,8 +67,10 @@ router.post('/heal-meta', authenticate, requireAdmin, async (req, res) => {
       const manhwas = await Manhwa.find({
         $or: [
           { genres: { $size: 0 } },
-          { author: { $in: [null, '', 'Unknown', 'unknown'] } },
-          { author: /n\/a/i },
+          { author: { $in: [null, ''] } },
+          { artist: { $in: [null, ''] } },
+          { author: /^n\/a$/i },
+          { artist: /^n\/a$/i },
           { latestChapter: 0 },
           { latestChapter: { $exists: false } }
         ]
