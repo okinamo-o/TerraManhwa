@@ -128,14 +128,16 @@ export default function Home() {
 
               {/* Meta */}
               <div className="flex items-center gap-4 text-sm font-bold tracking-widest uppercase mb-5 drop-shadow-md">
-                {hero?.rating?.score && (
+                {hero?.rating?.score > 0 && (
                   <span className="flex items-center gap-1.5 text-terra-gold bg-black/40 backdrop-blur-md px-3 py-1 rounded-full border border-terra-gold/20">
                     <HiStar size={16} /> {hero.rating.score.toFixed(1)}
                   </span>
                 )}
+                {hero?.views > 0 && (
                 <span className="flex items-center gap-1.5 text-white/80 bg-black/40 backdrop-blur-md px-3 py-1 rounded-full border border-white/10">
-                  <HiEye size={16} /> {(hero?.views / 1e6).toFixed(1)}M VIEWS
+                  <HiEye size={16} /> {formatViews(hero.views)} VIEWS
                 </span>
+                )}
                 <Badge type={hero?.status?.toLowerCase()}>{hero?.status}</Badge>
               </div>
 
@@ -250,7 +252,7 @@ export default function Home() {
                           <span className="text-6xl font-display text-transparent bg-clip-text bg-gradient-to-br from-terra-gold to-yellow-600 block mb-2 drop-shadow-xl">#1</span>
                           <h3 className="text-3xl md:text-5xl font-display tracking-tight leading-none mb-3 group-hover:text-terra-gold transition-colors">{popular[0].title}</h3>
                           <div className="flex items-center gap-4 text-xs font-bold uppercase tracking-widest text-white/70">
-                             <span className="flex items-center gap-1"><HiStar className="text-terra-gold" size={14}/> {popular[0].rating?.score?.toFixed(1) || '4.8'}</span>
+                             {popular[0].rating?.score > 0 && <span className="flex items-center gap-1"><HiStar className="text-terra-gold" size={14}/> {popular[0].rating.score.toFixed(1)}</span>}
                              <span>Ch. {popular[0].latestChapter}</span>
                           </div>
                        </div>
@@ -276,7 +278,7 @@ export default function Home() {
                       <div className="flex-1 min-w-0 pr-2">
                         <h4 className="font-bold truncate group-hover:text-terra-text transition-colors leading-tight mb-2 text-terra-text/80">{m.title}</h4>
                         <div className="flex items-center gap-3 text-[10px] uppercase tracking-widest font-bold text-terra-muted">
-                          <span className="flex items-center gap-1"><HiStar className="text-terra-gold" size={12} />{m.rating?.score?.toFixed(1) || '4.5'}</span>
+                          {m.rating?.score > 0 && <span className="flex items-center gap-1"><HiStar className="text-terra-gold" size={12} />{m.rating.score.toFixed(1)}</span>}
                           <span>Ch. {m.latestChapter}</span>
                         </div>
                       </div>
@@ -325,4 +327,11 @@ function SectionHeader({ title, subtitle, link }) {
       )}
     </div>
   );
+}
+
+function formatViews(n) {
+  if (!n) return '0';
+  if (n >= 1e6) return (n / 1e6).toFixed(1) + 'M';
+  if (n >= 1e3) return (n / 1e3).toFixed(1) + 'K';
+  return n.toString();
 }
