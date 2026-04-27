@@ -7,6 +7,7 @@ import Button from '../components/ui/Button';
 import ManhwaCard from '../components/manhwa/ManhwaCard';
 import { SkeletonBlock, SkeletonLine } from '../components/ui/Skeleton';
 import Spinner from '../components/ui/Spinner';
+import AdSlot from '../components/ads/AdSlot';
 import { manhwaService, collectionService } from '../services/manhwaService';
 import { useBookmarkStore } from '../store/bookmarkStore';
 import { useAuthStore } from '../store/authStore';
@@ -428,6 +429,11 @@ export default function ManhwaDetail() {
             </div>
           )}
         </section>
+
+        {/* ═══ AD SLOT ═══ */}
+        <div className="mt-8 flex justify-center">
+          <AdSlot type="native" />
+        </div>
 
         {/* ═══ RELATED ═══ */}
         {related.length > 0 && (

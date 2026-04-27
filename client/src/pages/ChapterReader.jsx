@@ -9,6 +9,7 @@ import { useReaderStore, useReadingProgressStore } from '../store/readerStore';
 import { useAuthStore } from '../store/authStore';
 import Spinner from '../components/ui/Spinner';
 import CommentSection from '../components/manhwa/CommentSection';
+import AdSlot from '../components/ads/AdSlot';
 
 /* Demo pages for when backend is offline */
 const makeDemoPages = () => Array.from({ length: 25 }, (_, i) => ({
@@ -361,14 +362,22 @@ export default function ChapterReader() {
           {mode === 'vertical' && (
             <div className="flex flex-col items-center" style={{ gap: `${pageGap}px` }}>
               {pages.map((page, i) => (
-                <img
-                  key={i}
-                  src={page.url}
-                  alt={`Page ${i + 1}`}
-                  className={`${fitClasses[imageFit] || 'w-full max-w-4xl'} mx-auto animate-fade-in`}
-                  loading="lazy"
-                  referrerPolicy="no-referrer"
-                />
+                <>
+                  <img
+                    key={i}
+                    src={page.url}
+                    alt={`Page ${i + 1}`}
+                    className={`${fitClasses[imageFit] || 'w-full max-w-4xl'} mx-auto animate-fade-in`}
+                    loading="lazy"
+                    referrerPolicy="no-referrer"
+                  />
+                  {/* Ad every 8 pages */}
+                  {(i + 1) % 8 === 0 && i < pages.length - 1 && (
+                    <div className="w-full max-w-4xl mx-auto py-2">
+                      <AdSlot type="reader-top" />
+                    </div>
+                  )}
+                </>
               ))}
             </div>
           )}
@@ -466,7 +475,10 @@ export default function ChapterReader() {
             </button>
           </div>
         </div>
-        {/* ═══ COMMENTS ═══ */}
+        {/* ═══ AD + COMMENTS ═══ */}
+        <div className="w-full max-w-4xl mx-auto py-4">
+          <AdSlot type="reader-bottom" />
+        </div>
         <div className="pb-32 bg-[#0a0a0a] border-t border-terra-border pt-12">
             <CommentSection slug={slug} />
         </div>
