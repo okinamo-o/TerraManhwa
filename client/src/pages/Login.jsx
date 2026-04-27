@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { HiEye, HiEyeOff } from 'react-icons/hi';
-import { FaGoogle, FaDiscord } from 'react-icons/fa';
+
 import Button from '../components/ui/Button';
 import { useAuthStore } from '../store/authStore';
 import toast from 'react-hot-toast';
@@ -77,19 +77,7 @@ export default function Login() {
               {loading ? 'Signing in...' : 'Sign In'}
             </Button>
 
-            <div className="relative my-4">
-              <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-terra-border" /></div>
-              <div className="relative flex justify-center text-xs"><span className="bg-terra-card px-3 text-terra-muted">or continue with</span></div>
-            </div>
 
-            <div className="flex gap-3">
-              <button type="button" className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-terra-bg border border-terra-border rounded-lg text-sm text-terra-muted hover:text-terra-text hover:border-terra-red transition-colors">
-                <FaGoogle size={16} /> Google
-              </button>
-              <button type="button" className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-terra-bg border border-terra-border rounded-lg text-sm text-terra-muted hover:text-terra-text hover:border-terra-red transition-colors">
-                <FaDiscord size={16} /> Discord
-              </button>
-            </div>
 
             <p className="text-center text-sm text-terra-muted mt-4">
               Don't have an account? <Link to="/register" className="text-terra-red hover:underline font-medium">Register</Link>
