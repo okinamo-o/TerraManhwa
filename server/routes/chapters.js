@@ -3,6 +3,7 @@ import Chapter from '../models/Chapter.js';
 import Manhwa from '../models/Manhwa.js';
 import { authenticate, requireAdmin } from '../middleware/auth.js';
 import { scrapeChapter } from '../scraper/scrapeChapter.js';
+import { scraperQueue } from '../queue/scraperQueue.js';
 
 const router = Router();
 
@@ -22,16 +23,22 @@ router.get('/:slug/:number', async (req, res) => {
                          (chapter.pages[0].url.startsWith('data:image') || chapter.pages[0].url.includes('blank'));
     
     if ((!chapter.pages || chapter.pages.length === 0 || isPlaceholder || req.query.refresh === 'true') && chapter.sourceUrl) {
-      console.log(`[LAZY LOAD] Fetching images for ${manhwa.title} Chapter ${number}...`);
-      const images = await scrapeChapter(chapter.sourceUrl);
-      if (images && images.length > 0) {
-        chapter.pages = images.map((url, i) => ({ url, order: i }));
-        console.log(`[LAZY LOAD] Cached ${images.length} images. Ready.`);
-      }
+      console.log(`[LAZY LOAD] Enqueuing scrape job for ${manhwa.title} Chapter ${number}...`);
+      
+      const job = await scraperQueue.add('scrape-chapter', {
+        chapterId: chapter._id,
+        sourceUrl: chapter.sourceUrl,
+      });
+
+      return res.status(202).json({
+        message: 'Chapter is currently being scraped.',
+        status: 'processing',
+        jobId: job.id,
+      });
     }
 
+    await Chapter.updateOne({ _id: chapter._id }, { $inc: { views: 1 } });
     chapter.views += 1;
-    await chapter.save();
     res.json(chapter);
   } catch (err) {
     res.status(500).json({ message: 'Failed to fetch chapter', error: err.message });
@@ -50,16 +57,22 @@ router.get('/:id', async (req, res) => {
     
     // ON-DEMAND LAZY LOAD
     if ((!chapter.pages || chapter.pages.length === 0) && chapter.sourceUrl) {
-      console.log(`[LAZY LOAD (ID API)] Fetching images for Chapter ID ${chapter._id}...`);
-      const images = await scrapeChapter(chapter.sourceUrl);
-      if (images && images.length > 0) {
-        chapter.pages = images.map((url, i) => ({ url, order: i }));
-        console.log(`[LAZY LOAD] Cached ${images.length} images. Ready.`);
-      }
+      console.log(`[LAZY LOAD (ID API)] Enqueuing scrape job for Chapter ID ${chapter._id}...`);
+      
+      const job = await scraperQueue.add('scrape-chapter', {
+        chapterId: chapter._id,
+        sourceUrl: chapter.sourceUrl,
+      });
+
+      return res.status(202).json({
+        message: 'Chapter is currently being scraped.',
+        status: 'processing',
+        jobId: job.id,
+      });
     }
 
+    await Chapter.updateOne({ _id: chapter._id }, { $inc: { views: 1 } });
     chapter.views += 1;
-    await chapter.save();
     res.json(chapter);
   } catch (err) {
     res.status(500).json({ message: 'Failed to fetch chapter', error: err.message });
@@ -71,7 +84,6 @@ router.delete('/:id', authenticate, requireAdmin, async (req, res) => {
   try {
     const chapter = await Chapter.findByIdAndDelete(req.params.id);
     if (!chapter) return res.status(404).json({ message: 'Chapter not found' });
-    await Manhwa.findByIdAndUpdate(chapter.manhwaId, { $pull: { chapters: chapter._id } });
     res.json({ message: 'Chapter deleted' });
   } catch (err) {
     res.status(500).json({ message: 'Failed to delete chapter', error: err.message });

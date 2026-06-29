@@ -131,9 +131,9 @@ router.get('/:slug', async (req, res) => {
     const manhwa = await Manhwa.findOne({ slug: req.params.slug });
     if (!manhwa) return res.status(404).json({ message: 'Manhwa not found' });
 
-    // Increment views
+    // Increment views atomically
+    await Manhwa.updateOne({ _id: manhwa._id }, { $inc: { views: 1 } });
     manhwa.views += 1;
-    await manhwa.save();
 
     let chapters = await Chapter.find({ manhwaId: manhwa._id })
       .sort({ chapterNumber: -1 })

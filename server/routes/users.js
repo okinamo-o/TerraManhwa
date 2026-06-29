@@ -65,16 +65,32 @@ router.delete('/me/bookmark/:manhwaId', authenticate, async (req, res) => {
 router.post('/me/history', authenticate, async (req, res) => {
   try {
     const { manhwaId, chapterId, lastPage } = req.body;
-    const user = await User.findById(req.user._id);
-    const existing = user.readingHistory.find((h) => h.manhwaId.toString() === manhwaId);
-    if (existing) {
-      existing.chapterId = chapterId;
-      existing.lastPage = lastPage;
-      existing.updatedAt = new Date();
-    } else {
-      user.readingHistory.push({ manhwaId, chapterId, lastPage });
+    
+    const updateRes = await User.updateOne(
+      { _id: req.user._id, 'readingHistory.manhwaId': manhwaId },
+      { 
+        $set: { 
+          'readingHistory.$.chapterId': chapterId, 
+          'readingHistory.$.lastPage': lastPage,
+          'readingHistory.$.updatedAt': new Date()
+        } 
+      }
+    );
+
+    if (updateRes.matchedCount === 0) {
+      await User.updateOne(
+        { _id: req.user._id },
+        { 
+          $push: { 
+            readingHistory: { 
+              $each: [{ manhwaId, chapterId, lastPage, updatedAt: new Date() }],
+              $slice: -200
+            } 
+          } 
+        }
+      );
     }
-    await user.save();
+    
     res.json({ message: 'Progress saved' });
   } catch (err) {
     res.status(500).json({ message: 'Failed to save progress', error: err.message });

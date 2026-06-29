@@ -16,6 +16,41 @@ const makeDemoPages = () => Array.from({ length: 25 }, (_, i) => ({
   url: `https://picsum.photos/800/${1100 + (i * 7) % 200}?random=${Date.now()}-${i}`,
   order: i,
 }));
+const PageImage = ({ page, index, onVisible, imageFit, fitClasses, isAd }) => {
+  const imgRef = useRef(null);
+
+  useEffect(() => {
+    if (!imgRef.current) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) {
+          onVisible(index);
+        }
+      },
+      { threshold: 0.4 }
+    );
+    observer.observe(imgRef.current);
+    return () => observer.disconnect();
+  }, [index, onVisible]);
+
+  return (
+    <>
+      <img
+        ref={imgRef}
+        src={page.url}
+        alt={`Page ${index + 1}`}
+        className={`${fitClasses[imageFit] || 'w-full max-w-4xl'} mx-auto animate-fade-in`}
+        loading="lazy"
+        referrerPolicy="no-referrer"
+      />
+      {isAd && (
+        <div className="w-full max-w-4xl mx-auto py-2">
+          <AdSlot type="reader-top" />
+        </div>
+      )}
+    </>
+  );
+};
 
 export default function ChapterReader() {
   const { slug, chapterNumber } = useParams();
@@ -133,25 +168,14 @@ export default function ChapterReader() {
         setToolbarVisible(true);
       }
       lastScrollY.current = y;
-
-      if (mode === 'vertical' && containerRef.current) {
-        const imgs = containerRef.current.querySelectorAll('img');
-        if (imgs.length === 0) return;
-        let closest = 0;
-        let minDist = Infinity;
-        imgs.forEach((img, i) => {
-          const dist = Math.abs(img.getBoundingClientRect().top - 100);
-          if (dist < minDist) {
-            minDist = dist;
-            closest = i;
-          }
-        });
-        setCurrentPage(closest);
-      }
     };
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
   }, [mode]);
+
+  const handlePageVisible = useCallback((index) => {
+    setCurrentPage((prev) => (prev !== index ? index : prev));
+  }, []);
 
   /* Keyboard shortcuts */
   const goNextPage = useCallback(() => {
@@ -362,22 +386,15 @@ export default function ChapterReader() {
           {mode === 'vertical' && (
             <div className="flex flex-col items-center" style={{ gap: `${pageGap}px` }}>
               {pages.map((page, i) => (
-                <>
-                  <img
-                    key={i}
-                    src={page.url}
-                    alt={`Page ${i + 1}`}
-                    className={`${fitClasses[imageFit] || 'w-full max-w-4xl'} mx-auto animate-fade-in`}
-                    loading="lazy"
-                    referrerPolicy="no-referrer"
-                  />
-                  {/* Ad every 8 pages */}
-                  {(i + 1) % 8 === 0 && i < pages.length - 1 && (
-                    <div className="w-full max-w-4xl mx-auto py-2">
-                      <AdSlot type="reader-top" />
-                    </div>
-                  )}
-                </>
+                <PageImage
+                  key={i}
+                  page={page}
+                  index={i}
+                  onVisible={handlePageVisible}
+                  imageFit={imageFit}
+                  fitClasses={fitClasses}
+                  isAd={(i + 1) % 8 === 0 && i < pages.length - 1}
+                />
               ))}
             </div>
           )}

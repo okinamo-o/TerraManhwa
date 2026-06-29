@@ -34,10 +34,10 @@ export async function fetchHtml(url, attempt = 1) {
  * Scrape catalog from KingOfShojo
  * Returns: [{ title, slug, sourceUrl, cover }]
  */
-export async function scrapeCatalog(page = 1) {
+export async function scrapeCatalog(page = 1, order = 'popular') {
   const url = page > 1 
-    ? `${config.baseURL}/manga/page/${page}/?order=popular`
-    : `${config.baseURL}/manga/?order=popular`;
+    ? `${config.baseURL}/manga/page/${page}/?order=${order}`
+    : `${config.baseURL}/manga/?order=${order}`;
 
   console.log(`📚 Scraping catalog from KingOfShojo (Page ${page})...`);
   const results = [];

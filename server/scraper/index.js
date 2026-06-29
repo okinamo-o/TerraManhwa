@@ -86,7 +86,7 @@ async function seedScrape() {
             sourceUrl: ch.sourceUrl,
           }));
           const inserted = await Chapter.insertMany(shellDocs);
-          manhwaDoc.chapters = inserted.map(c => c._id);
+
           manhwaDoc.latestChapter = detail.chapters[detail.chapters.length - 1].chapterNumber;
           await manhwaDoc.save();
         }
@@ -174,7 +174,7 @@ async function fullMetadataSeed() {
             sourceUrl: ch.sourceUrl,
           }));
           const inserted = await Chapter.insertMany(shellDocs);
-          manhwaDoc.chapters.push(...inserted.map(c => c._id));
+
           await manhwaDoc.save();
         }
 
@@ -218,7 +218,7 @@ async function updateScrape() {
   console.log('\n🔄 UPDATE SCRAPE — KingOfShojo\n');
   const startTime = Date.now();
   try {
-    const catalog = await scrapeCatalog(); // Gets the first few pages/popular
+    const catalog = await scrapeCatalog(1, 'update'); // Gets the latest updated manhwas
     let newChaptersCounter = 0;
 
     for (const item of catalog) {
@@ -247,7 +247,7 @@ async function updateScrape() {
         }));
 
         const inserted = await Chapter.insertMany(shellDocs);
-        existing.chapters.push(...inserted.map(c => c._id));
+
         existing.latestChapter = detail.chapters[detail.chapters.length - 1].chapterNumber;
         await existing.save();
 
@@ -310,19 +310,20 @@ async function targetedBatchScrape() {
   const startTime = Date.now();
 
   try {
-    const allManhwa = await Manhwa.find({}).sort({ title: 1 });
-    const targetSet = allArg ? allManhwa : allManhwa.filter(m => regex.test(m.title));
-
-    console.log(`\n📚 Sub-batch identified: ${targetSet.length} manhwa found starting with ${label}.\n`);
+    const query = allArg ? {} : { title: { $regex: regex } };
+    const totalCount = await Manhwa.countDocuments(query);
+    console.log(`\n📚 Sub-batch identified: ${totalCount} manhwa found starting with ${label}.\n`);
 
     let processed = 0;
     let chaptersAdded = 0;
     const limit = args.find(a => a.startsWith('--limit='))?.split('=')[1] || null;
 
-    for (const manhwa of targetSet) {
+    const manhwaCursor = Manhwa.find(query).sort({ title: 1 }).cursor();
+
+    for await (const manhwa of manhwaCursor) {
       if (limit && processed >= parseInt(limit)) break;
       try {
-        console.log(`  📖 [${processed + 1}/${targetSet.length}] Processing: ${manhwa.title}`);
+        console.log(`  📖 [${processed + 1}/${totalCount}] Processing: ${manhwa.title}`);
         
         // Fetch fresh detail to get full chapter list from KingOfShojo
         const detail = await scrapeManhwa(manhwa.sourceUrl);
@@ -350,7 +351,7 @@ async function targetedBatchScrape() {
               sourceUrl: ch.sourceUrl,
             });
 
-            manhwa.chapters.push(chapterDoc._id);
+
             chaptersAdded++;
 
             // [TRIGGER] Notify bookmarked users
@@ -482,7 +483,7 @@ async function scrapeSingle(slug) {
             pages: uploadedPages,
             sourceUrl: ch.sourceUrl,
           });
-          manhwaDoc.chapters.push(chapterDoc._id);
+
           console.log(`    ⭐ Added new Chapter ${ch.chapterNumber}`);
         }
         

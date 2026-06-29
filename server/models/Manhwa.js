@@ -21,7 +21,6 @@ const manhwaSchema = new mongoose.Schema({
   },
   views: { type: Number, default: 0 },
   bookmarkCount: { type: Number, default: 0 },
-  chapters: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Chapter' }],
   latestChapter: { type: Number, default: 0 },
   sourceUrl: { type: String }, // manhwaclan URL for scraper reference
   scrapeError: { type: Boolean, default: false },
