@@ -2,7 +2,7 @@ import axios from 'axios';
 import toast from 'react-hot-toast';
 
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || '/api',
+  baseURL: '/api', // Hardcoded to use Vercel proxy (development Vite proxy will also handle this)
   withCredentials: true,
   headers: { 'Content-Type': 'application/json' },
 });
