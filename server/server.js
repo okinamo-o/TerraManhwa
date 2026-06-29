@@ -4,6 +4,7 @@ import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import helmet from 'helmet';
 import morgan from 'morgan';
+import compression from 'compression';
 import dotenv from 'dotenv';
 import rateLimit from 'express-rate-limit';
 import { csrfProtection, generateCsrfToken } from './middleware/csrf.js';
@@ -65,6 +66,8 @@ app.use(cors({
   ],
   credentials: true,
 }));
+
+app.use(compression());
 app.use(express.json({ limit: '10mb' }));
 app.use(cookieParser());
 app.use(morgan('dev'));

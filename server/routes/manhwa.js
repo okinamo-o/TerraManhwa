@@ -32,9 +32,9 @@ router.get('/meta', async (req, res) => {
 /* GET /api/manhwa/featured */
 router.get('/featured', async (req, res) => {
   try {
-    let data = await Manhwa.find({ isFeatured: true }).limit(5);
+    let data = await Manhwa.find({ isFeatured: true }).limit(5).select('title slug cover views rating status latestChapter');
     if (data.length === 0) {
-      data = await Manhwa.find().sort({ views: -1 }).limit(5);
+      data = await Manhwa.find().sort({ views: -1 }).limit(5).select('title slug cover views rating status latestChapter');
     }
     res.json({ data });
   } catch (err) {
@@ -45,7 +45,7 @@ router.get('/featured', async (req, res) => {
 /* GET /api/manhwa/trending */
 router.get('/trending', async (req, res) => {
   try {
-    const data = await Manhwa.find().sort({ views: -1 }).limit(10);
+    const data = await Manhwa.find().sort({ views: -1 }).limit(10).select('title slug cover views rating status latestChapter');
     res.json({ data });
   } catch (err) {
     res.status(500).json({ message: 'Failed to fetch trending manhwa' });
@@ -55,7 +55,7 @@ router.get('/trending', async (req, res) => {
 /* GET /api/manhwa/latest */
 router.get('/latest', async (req, res) => {
   try {
-    const data = await Manhwa.find().sort({ updatedAt: -1 }).limit(20);
+    const data = await Manhwa.find().sort({ updatedAt: -1 }).limit(20).select('title slug cover views rating status latestChapter');
     res.json({ data });
   } catch (err) {
     res.status(500).json({ message: 'Failed to fetch latest manhwa' });
@@ -65,7 +65,7 @@ router.get('/latest', async (req, res) => {
 /* GET /api/manhwa/popular */
 router.get('/popular', async (req, res) => {
   try {
-    const data = await Manhwa.find().sort({ 'rating.score': -1 }).limit(20);
+    const data = await Manhwa.find().sort({ 'rating.score': -1 }).limit(20).select('title slug cover views rating status latestChapter');
     res.json({ data });
   } catch (err) {
     res.status(500).json({ message: 'Failed to fetch popular manhwa' });

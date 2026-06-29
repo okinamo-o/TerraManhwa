@@ -4,6 +4,7 @@ import { HiSearch, HiMenu, HiX, HiBell, HiChevronDown } from 'react-icons/hi';
 import Logo from './Logo';
 import Button from '../ui/Button';
 import { useAuthStore } from '../../store/authStore';
+import { useShallow } from 'zustand/react/shallow';
 import { manhwaService, searchService, notificationService } from '../../services/manhwaService';
 
 export default function Navbar() {
@@ -25,7 +26,7 @@ export default function Navbar() {
   const genresRef = useRef(null);
   const location = useLocation();
   const navigate = useNavigate();
-  const { user, logout } = useAuthStore();
+  const { user, logout } = useAuthStore(useShallow(state => ({ user: state.user, logout: state.logout })));
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 20);

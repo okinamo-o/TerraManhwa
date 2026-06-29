@@ -1,9 +1,10 @@
 import { Navigate, Outlet } from 'react-router-dom';
 import { useAuthStore } from '../../store/authStore';
+import { useShallow } from 'zustand/react/shallow';
 import Spinner from '../ui/Spinner';
 
 export default function ProtectedRoute({ requireAdmin = false }) {
-  const { user, initialized } = useAuthStore();
+  const { user, initialized } = useAuthStore(useShallow(state => ({ user: state.user, initialized: state.initialized })));
 
   if (!initialized) {
     return (

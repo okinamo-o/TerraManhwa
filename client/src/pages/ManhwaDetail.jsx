@@ -12,6 +12,7 @@ import { manhwaService, collectionService } from '../services/manhwaService';
 import { useBookmarkStore } from '../store/bookmarkStore';
 import { useAuthStore } from '../store/authStore';
 import { useReadingProgressStore } from '../store/readerStore';
+import { useShallow } from 'zustand/react/shallow';
 import CommentSection from '../components/manhwa/CommentSection';
 import toast from 'react-hot-toast';
 
@@ -26,8 +27,8 @@ export default function ManhwaDetail() {
   const [chapterPage, setChapterPage] = useState(1);
   const chaptersPerPage = 50;
 
-  const { isBookmarked, toggleBookmark } = useBookmarkStore();
-  const { user } = useAuthStore();
+  const { isBookmarked, toggleBookmark } = useBookmarkStore(useShallow(state => ({ isBookmarked: state.isBookmarked, toggleBookmark: state.toggleBookmark })));
+  const user = useAuthStore(state => state.user);
   const bookmarked = isBookmarked(slug);
   const progress = useReadingProgressStore((s) => s.getProgress(slug));
   const [related, setRelated] = useState([]);

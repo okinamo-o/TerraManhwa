@@ -29,4 +29,9 @@ const manhwaSchema = new mongoose.Schema({
 /* Text index for search */
 manhwaSchema.index({ title: 'text', alternativeTitles: 'text', author: 'text', synopsis: 'text' });
 
+/* Performance Indexes for heavy home page queries */
+manhwaSchema.index({ views: -1 });
+manhwaSchema.index({ updatedAt: -1 });
+manhwaSchema.index({ 'rating.score': -1 });
+
 export default mongoose.model('Manhwa', manhwaSchema);

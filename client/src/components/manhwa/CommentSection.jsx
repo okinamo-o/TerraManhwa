@@ -7,7 +7,7 @@ import Button from '../ui/Button';
 import Spinner from '../ui/Spinner';
 
 export default function CommentSection({ slug }) {
-  const { user } = useAuthStore();
+  const user = useAuthStore(state => state.user);
   const [comments, setComments] = useState([]);
   const [content, setContent] = useState('');
   const [loading, setLoading] = useState(true);

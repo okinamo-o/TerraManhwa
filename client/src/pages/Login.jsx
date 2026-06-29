@@ -13,7 +13,7 @@ export default function Login() {
   const [showPW, setShowPW] = useState(false);
   const [remember, setRemember] = useState(false);
   const [loading, setLoading] = useState(false);
-  const { login } = useAuthStore();
+  const login = useAuthStore(state => state.login);
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {

@@ -23,7 +23,7 @@ export default function Register() {
   const [showPW, setShowPW] = useState(false);
   const [agreed, setAgreed] = useState(false);
   const [loading, setLoading] = useState(false);
-  const { register } = useAuthStore();
+  const register = useAuthStore(state => state.register);
   const navigate = useNavigate();
 
   const strength = pwStrength(form.password);

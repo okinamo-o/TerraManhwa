@@ -17,7 +17,7 @@ const tabs = [
 
 export default function Profile() {
   const { username } = useParams();
-  const { user: currentUser } = useAuthStore();
+  const currentUser = useAuthStore(state => state.user);
   const [profile, setProfile] = useState(null);
   const [comments, setComments] = useState([]);
   const [loading, setLoading] = useState(true);

@@ -6,8 +6,10 @@ import toast from 'react-hot-toast';
 import { useAuthStore } from '../store/authStore';
 import { userService } from '../services/manhwaService';
 
+import { useShallow } from 'zustand/react/shallow';
+
 export default function Settings() {
-  const { user, setUser } = useAuthStore();
+  const { user, setUser } = useAuthStore(useShallow(state => ({ user: state.user, setUser: state.setUser })));
   const [deleteModal, setDeleteModal] = useState(false);
   const [loading, setLoading] = useState(false);
   

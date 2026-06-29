@@ -7,6 +7,7 @@ import {
 } from 'react-icons/hi';
 import { useReaderStore, useReadingProgressStore } from '../store/readerStore';
 import { useAuthStore } from '../store/authStore';
+import { useShallow } from 'zustand/react/shallow';
 import Spinner from '../components/ui/Spinner';
 import CommentSection from '../components/manhwa/CommentSection';
 import AdSlot from '../components/ads/AdSlot';
@@ -66,35 +67,25 @@ export default function ChapterReader() {
   const [error, setError] = useState(null);
   
   const [ids, setIds] = useState({ manhwaId: null, chapterId: null });
-  const { user } = useAuthStore();
+  const user = useAuthStore(state => state.user);
 
   const containerRef = useRef(null);
   const lastScrollY = useRef(0);
 
-  /* Reader store values with defaults */
-  let mode = 'vertical';
-  let background = 'black';
-  let imageFit = 'fit-width';
-  let pageGap = 4;
-  let setMode, setBackground, setImageFit, setPageGap;
-  let saveProgress;
+  const { mode, background, imageFit, pageGap, setMode, setBackground, setImageFit, setPageGap } = useReaderStore(
+    useShallow(state => ({
+      mode: state.mode || 'vertical',
+      background: state.background || 'black',
+      imageFit: state.imageFit || 'fit-width',
+      pageGap: state.pageGap ?? 4,
+      setMode: state.setMode,
+      setBackground: state.setBackground,
+      setImageFit: state.setImageFit,
+      setPageGap: state.setPageGap
+    }))
+  );
 
-  try {
-    const readerStore = useReaderStore();
-    mode = readerStore.mode || 'vertical';
-    background = readerStore.background || 'black';
-    imageFit = readerStore.imageFit || 'fit-width';
-    pageGap = readerStore.pageGap ?? 4;
-    setMode = readerStore.setMode;
-    setBackground = readerStore.setBackground;
-    setImageFit = readerStore.setImageFit;
-    setPageGap = readerStore.setPageGap;
-
-    const progressStore = useReadingProgressStore();
-    saveProgress = progressStore.saveProgress;
-  } catch (e) {
-    console.error('Store init error:', e);
-  }
+  const saveProgress = useReadingProgressStore(state => state.saveProgress);
 
   /* Fetch manhwa metadata for total chapters */
   useEffect(() => {

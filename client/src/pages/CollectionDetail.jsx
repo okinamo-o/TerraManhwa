@@ -10,7 +10,7 @@ import toast from 'react-hot-toast';
 
 export default function CollectionDetail() {
   const { id } = useParams();
-  const { user } = useAuthStore();
+  const user = useAuthStore(state => state.user);
   const [collection, setCollection] = useState(null);
   const [loading, setLoading] = useState(true);
   const [liked, setLiked] = useState(false);
