@@ -14,6 +14,10 @@ const getCsrfToken = () => {
     csrfPromise = api.get('/csrf-token').then(res => {
       api.defaults.headers.common['X-CSRF-Token'] = res.data.csrfToken;
       return res.data.csrfToken;
+    }).catch(err => {
+      console.warn('CSRF token fetch failed:', err.message);
+      csrfPromise = null;
+      return null;
     });
   }
   return csrfPromise;
